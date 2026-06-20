@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bildbanken</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f5f2;
+      color: #1e2528;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #d9ddd8;
+      padding: 24px clamp(16px, 4vw, 48px);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    h1 {
+      font-size: clamp(1.7rem, 3vw, 2.4rem);
+      line-height: 1.1;
+      margin: 0 0 16px;
+    }
+
+    .tools {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      max-width: 860px;
+    }
+
+    input {
+      border: 1px solid #b7c0bd;
+      border-radius: 6px;
+      flex: 1;
+      font: inherit;
+      min-width: 0;
+      padding: 11px 12px;
+    }
+
+    .count {
+      color: #536160;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    main {
+      padding: 24px clamp(16px, 4vw, 48px) 48px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    }
+
+    figure {
+      background: #ffffff;
+      border: 1px solid #d9ddd8;
+      border-radius: 8px;
+      cursor: zoom-in;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    img {
+      aspect-ratio: 4 / 3;
+      background: #e2e5e1;
+      display: block;
+      height: auto;
+      object-fit: cover;
+      width: 100%;
+    }
+
+    figcaption {
+      display: grid;
+      gap: 6px;
+      padding: 12px;
+    }
+
+    .name {
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .meta {
+      color: #536160;
+      font-size: 0.9rem;
+      overflow-wrap: anywhere;
+    }
+
+    .empty {
+      color: #536160;
+      font-size: 1.1rem;
+      margin: 32px 0;
+    }
+
+    dialog {
+      background: #111;
+      border: 0;
+      color: #fff;
+      height: 100%;
+      max-height: none;
+      max-width: none;
+      padding: 0;
+      width: 100%;
+    }
+
+    dialog::backdrop {
+      background: #111;
+    }
+
+    .viewer {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100%;
+    }
+
+    .viewer-bar {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      padding: 12px clamp(12px, 3vw, 28px);
+    }
+
+    .viewer-title {
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    button {
+      background: #fff;
+      border: 0;
+      border-radius: 6px;
+      color: #111;
+      cursor: pointer;
+      font: inherit;
+      padding: 9px 12px;
+    }
+
+    .viewer-image {
+      align-self: center;
+      background: #111;
+      justify-self: center;
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .viewer-meta {
+      color: #d7d7d7;
+      overflow-wrap: anywhere;
+      padding: 12px clamp(12px, 3vw, 28px);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bildbanken</h1>
+    <div class="tools">
+      <input id="search" type="search" placeholder="Sök på katalog eller filnamn" autocomplete="off">
+      <span class="count" id="count"></span>
+    </div>
+  </header>
+  <main>
+    <div class="grid" id="grid"></div>
+    <p class="empty" id="empty" hidden>Inga bilder matchar sökningen.</p>
+  </main>
+  <dialog id="viewer">
+    <div class="viewer">
+      <div class="viewer-bar">
+        <div class="viewer-title" id="viewer-title"></div>
+        <button id="viewer-close" type="button">Stäng</button>
+      </div>
+      <img class="viewer-image" id="viewer-image" alt="">
+      <div class="viewer-meta" id="viewer-meta"></div>
+    </div>
+  </dialog>
+
+  <script>
+    const state = {
+      photos: [],
+      photographers: {}
+    };
+
+    const grid = document.querySelector("#grid");
+    const search = document.querySelector("#search");
+    const count = document.querySelector("#count");
+    const empty = document.querySelector("#empty");
+    const viewer = document.querySelector("#viewer");
+    const viewerImage = document.querySelector("#viewer-image");
+    const viewerTitle = document.querySelector("#viewer-title");
+    const viewerMeta = document.querySelector("#viewer-meta");
+    const viewerClose = document.querySelector("#viewer-close");
+
+    init();
+
+    async function init() {
+      const [photographers, tree] = await Promise.all([
+        fetchJson("photographers.json", {}),
+        fetchJson("photos.json", {})
+      ]);
+      state.photographers = photographers;
+      state.photos = flattenPhotos(tree).sort((a, b) => b.date.localeCompare(a.date));
+      search.addEventListener("input", render);
+      viewerClose.addEventListener("click", closeViewer);
+      viewer.addEventListener("click", (event) => {
+        if (event.target === viewer) closeViewer();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && viewer.open) closeViewer();
+      });
+      render();
+    }
+
+    async function fetchJson(url, fallback) {
+      try {
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error(response.statusText);
+        return await response.json();
+      } catch (error) {
+        console.warn(`Kunde inte läsa ${url}`, error);
+        return fallback;
+      }
+    }
+
+    function flattenPhotos(tree) {
+      const photos = [];
+      walk(tree, []);
+      return photos;
+
+      function walk(node, path) {
+        for (const [name, value] of Object.entries(node || {})) {
+          if (Array.isArray(value)) {
+            const [key, photographerKey] = value.length === 2 ? value : [value[2], value[3]];
+            const folders = path.slice(1);
+            photos.push({
+              name,
+              key,
+              photographerKey,
+              folders,
+              date: findDate([...path, name]),
+              haystack: [...folders, name].join(" ").toLowerCase()
+            });
+          } else {
+            walk(value, [...path, name]);
+          }
+        }
+      }
+    }
+
+    function findDate(parts) {
+      for (const part of parts) {
+        const match = String(part).match(/\d{4}-\d{2}-\d{2}/);
+        if (match) return match[0];
+      }
+      const year = parts.find((part) => /^\d{4}$/.test(String(part)));
+      return year ? `${year}-00-00` : "0000-00-00";
+    }
+
+    function render() {
+      const query = normalize(search.value);
+      const terms = query.split(/\s+/).filter(Boolean);
+      const matches = rankMatches(state.photos, terms);
+      const visible = query ? matches : matches.slice(0, 10);
+
+      grid.replaceChildren(...visible.map(renderPhoto));
+      empty.hidden = visible.length > 0;
+      count.textContent = query ? `${visible.length} av ${state.photos.length}` : `${visible.length} senaste`;
+    }
+
+    function renderPhoto(photo) {
+      const figure = document.createElement("figure");
+      const image = document.createElement("img");
+      const caption = document.createElement("figcaption");
+      const name = document.createElement("div");
+      const meta = document.createElement("div");
+
+      image.src = imageUrl(photo);
+      image.alt = photo.name;
+      image.loading = "lazy";
+
+      name.className = "name";
+      name.textContent = photo.name;
+
+      meta.className = "meta";
+      meta.textContent = [
+        photo.folders.join(" / "),
+        photographerName(photo.photographerKey)
+      ].filter(Boolean).join(" | ");
+
+      caption.append(name, meta);
+      figure.append(image, caption);
+      figure.addEventListener("click", () => openViewer(photo));
+      return figure;
+    }
+
+    function rankMatches(photos, terms) {
+      if (terms.length === 0) return photos;
+
+      return photos
+        .map((photo) => ({ photo, score: matchScore(photo, terms) }))
+        .filter((entry) => entry.score > 0)
+        .sort((a, b) => b.score - a.score || b.photo.date.localeCompare(a.photo.date))
+        .map((entry) => entry.photo);
+    }
+
+    function matchScore(photo, terms) {
+      const haystack = photo.haystack;
+      const phrase = terms.join(" ");
+      const matched = terms.filter((term) => haystack.includes(term)).length;
+      if (matched === 0) return 0;
+
+      let score = matched;
+      if (matched === terms.length) score += 100;
+      if (terms.length > 1 && haystack.includes(phrase)) score += 1000;
+      return score;
+    }
+
+    function normalize(value) {
+      return value.trim().toLowerCase();
+    }
+
+    function openViewer(photo) {
+      viewerImage.src = imageUrl(photo, 2400);
+      viewerImage.alt = photo.name;
+      viewerTitle.textContent = photo.name;
+      viewerMeta.textContent = [
+        photo.folders.join(" / "),
+        photographerName(photo.photographerKey)
+      ].filter(Boolean).join(" | ");
+      viewer.showModal();
+    }
+
+    function closeViewer() {
+      viewer.close();
+      viewerImage.removeAttribute("src");
+    }
+
+    function photographerName(key) {
+      return state.photographers[key]?.[0] || key;
+    }
+
+    function imageUrl(photo, size = 1200) {
+      if (/^https?:\/\//.test(photo.key)) return photo.key;
+      if (/^[A-Za-z0-9_-]{20,}$/.test(photo.key)) {
+        return `https://drive.google.com/thumbnail?id=${encodeURIComponent(photo.key)}&sz=w${size}`;
+      }
+      return encodeURI(photo.key);
+    }
+  </script>
+</body>
+</html>
