@@ -97,3 +97,30 @@ Sökning ska kunna ske på flera termer. Om två termer, A och B, används ska r
 Då man klickar på en bild ska den visas på hela skärmen med en länk med följande utseende:
 Exempel: https://drive.google.com/file/d/1_eXXpVdeaxtgSX9wJX5ftuim4Hmm7G-g/view?usp=drive_link
 Man ska bara behöva klicka en gång, inte två via en "Öppna" knapp.
+
+## Skapa README_admin.md
+
+* Denna förklarar hur producers läggs upp, dvs fotografer.
+```
+  "LOAH":["Lars OA Hedlund","https://drive.google.com/drive/folders/1jAaO5eTMgH7jYr1O7stv1dlxO4ylbICX?usp=sharing"]
+```
+* Var man hittar filen, hur den hamnar på github.
+
+## Skapa README_producer.md
+
+* Denna förklarar vad en fotograf behöver veta.
+* Introduktion till Google Drive.
+* Vad man skickar till admin.
+* Hur man skapar kataloger och bildfiler.
+* T ex vad som ska stå i ett turneringsnamn och i ett bildfilsnamn.
+* Förklara skillnaden mellan att använda underscore och mellanslag.
+	* underscore används oftast för att binda ihop förnamn och efternamn. T ex Bo_Ek
+		* Då kan man söka på Bo_Ek och slipper falska träffar som Bo Björk
+
+## Skapa README_consumer.md
+
+* Denna förklarar vad en användare behöver veta.
+* Hur man söker
+* Hur man kan använda urlen.
+* Hur man zoom och panorerar.
+* Hur man hämtar ner en bild
