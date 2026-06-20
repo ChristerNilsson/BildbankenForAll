@@ -29,6 +29,19 @@ Jag antar att du kontrollerar om något nytt tillkommit, för varje fotograf, in
 Logga till update.log. Ska även innehålla tidpunkter. Logga varje json-fil som skapas.
 Före "Startar uppdatering" ska en blank rad skrivas ut.
 
+Vill se lite indenteringar i logfilen:
+```
+2026-06-20T18:06:00 Startar uppdatering.
+2026-06-20T18:06:00  OAuth används för Drive API och ändringskontroll.
+2026-06-20T18:06:00  Hämtar CN.
+2026-06-20T18:06:00   Inga Drive-ändringar för CN. CN.json lämnas oförändrad.
+2026-06-20T18:06:00   Skapade CN.changes.json.
+2026-06-20T18:06:00  Hämtar LOAH.
+2026-06-20T18:06:01   Inga Drive-ändringar för LOAH. LOAH.json lämnas oförändrad.
+2026-06-20T18:06:01   Skapade LOAH.changes.json.
+2026-06-20T18:06:01  Skapade photos.json med 2311 bilder.
+2026-06-20T18:06:01 Uppdatering klar.
+```
 # photographers.json
 
 Denna fil uppdateras manuellt.

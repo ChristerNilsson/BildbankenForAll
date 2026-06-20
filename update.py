@@ -60,11 +60,11 @@ def main() -> None:
     log("Startar uppdatering.")
     OAUTH_TOKEN = load_oauth_token()
     if OAUTH_TOKEN:
-        log("OAuth används för Drive API och ändringskontroll.")
+        log_step("OAuth används för Drive API och ändringskontroll.")
     elif GOOGLE_DRIVE_API_KEY:
-        log("Google Drive API används för katalogkontroll.")
+        log_step("Google Drive API används för katalogkontroll.")
     else:
-        log("GOOGLE_DRIVE_API_KEY saknas. Faller tillbaka till HTML-läsning.")
+        log_step("GOOGLE_DRIVE_API_KEY saknas. Faller tillbaka till HTML-läsning.")
 
     photographers = read_json(PHOTOGRAPHERS_FILE, {})
     photos: dict[str, Any] = {}
@@ -80,7 +80,7 @@ def main() -> None:
             log(f"Hoppar över {photographer_key}: kan inte läsa Drive-id ur {photographer[1]!r}.")
             continue
 
-        log(f"Hämtar {photographer_key}.")
+        log_step(f"Hämtar {photographer_key}.")
         photographer_file = PHOTOGRAPHER_DATA_DIR / f"{photographer_key}.json"
         manifest_file = PHOTOGRAPHER_DATA_DIR / f"{photographer_key}.manifest.json"
         changes_file = PHOTOGRAPHER_DATA_DIR / f"{photographer_key}.changes.json"
@@ -91,11 +91,11 @@ def main() -> None:
         if OAUTH_TOKEN and old_photographer_photos and old_manifest and changes_state:
             changed = photographer_has_drive_changes(changes_state, old_manifest)
             if not changed:
-                log(f"Inga Drive-ändringar för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
+                log_detail(f"Inga Drive-ändringar för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
                 ensure_json_file(photographer_file, old_photographer_photos)
                 ensure_json_file(manifest_file, old_manifest)
                 write_json(changes_file, changes_state)
-                log(f"Skapade {changes_file.name}.")
+                log_detail(f"Skapade {changes_file.name}.")
                 total += count_photos(old_photographer_photos)
                 merge_tree(photos, old_photographer_photos)
                 continue
@@ -108,38 +108,38 @@ def main() -> None:
         count = count_photos(photographer_photos)
 
         if count == 0 and old_photographer_photos:
-            log(f"Inga Drive-poster hittades för {photographer_key}. Återanvänder {photographer_file.name}.")
+            log_detail(f"Inga Drive-poster hittades för {photographer_key}. Återanvänder {photographer_file.name}.")
             photographer_photos = old_photographer_photos
             count = count_photos(photographer_photos)
         elif manifest.get("hash") == old_manifest.get("hash") and old_photographer_photos:
-            log(f"Inget nytt för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
+            log_detail(f"Inget nytt för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
             photographer_photos = old_photographer_photos
             count = count_photos(photographer_photos)
             ensure_json_file(photographer_file, photographer_photos)
             ensure_json_file(manifest_file, manifest)
         elif photographer_photos != old_photographer_photos:
             write_json(photographer_file, photographer_photos)
-            log(f"Skapade {photographer_file.name} med {count} bilder.")
+            log_detail(f"Skapade {photographer_file.name} med {count} bilder.")
             write_json(manifest_file, manifest)
-            log(f"Skapade {manifest_file.name} med {len(manifest_entries)} poster.")
+            log_detail(f"Skapade {manifest_file.name} med {len(manifest_entries)} poster.")
         else:
-            log(f"Inget nytt för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
+            log_detail(f"Inget nytt för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
             if manifest != old_manifest:
                 write_json(manifest_file, manifest)
-                log(f"Skapade {manifest_file.name} med {len(manifest_entries)} poster.")
+                log_detail(f"Skapade {manifest_file.name} med {len(manifest_entries)} poster.")
 
         if OAUTH_TOKEN:
             try:
                 write_json(changes_file, build_changes_state(manifest))
-                log(f"Skapade {changes_file.name}.")
+                log_detail(f"Skapade {changes_file.name}.")
             except RuntimeError as error:
-                log(f"Kunde inte skapa {changes_file.name}: {error}")
+                log_detail(f"Kunde inte skapa {changes_file.name}: {error}")
 
         total += count
         merge_tree(photos, photographer_photos)
 
     write_json(PHOTOS_FILE, photos)
-    log(f"Skapade {PHOTOS_FILE.name} med {total} bilder.")
+    log_step(f"Skapade {PHOTOS_FILE.name} med {total} bilder.")
     log("Uppdatering klar.")
 
 
@@ -172,6 +172,14 @@ def log(message: str) -> None:
     print(line)
     with LOG_FILE.open("a", encoding="utf-8") as file:
         file.write(line + "\n")
+
+
+def log_step(message: str) -> None:
+    log(f" {message}")
+
+
+def log_detail(message: str) -> None:
+    log(f"  {message}")
 
 
 def start_log_section() -> None:
