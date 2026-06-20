@@ -27,6 +27,7 @@ Dessa filer ska sparas i katalogen photographers tillsammans med manifest och ch
 Jag antar att du kontrollerar om något nytt tillkommit, för varje fotograf, innan du återskapar fotografens json.
 
 Logga till update.log. Ska även innehålla tidpunkter. Logga varje json-fil som skapas.
+Före "Startar uppdatering" ska en blank rad skrivas ut.
 
 # photographers.json
 
@@ -61,15 +62,27 @@ Förklaring:
 
 # index.html
 
-Input: 
+Starta inte någon web server, jag använder Go Live!
+
+## Input 
+
 * photographers.json
 * photos.json
 
-Detta program ska inledningsvis bara visa de senaste tio bilderna.  
+## Sökning
+
+Då man ändrar i queryfältet ska urlen uppdateras. Den ska även läsa in det som står där initialt.
+
+Om query är tomt ska bara de senaste tio bilderna visas.  
 Programmet ska ha sökmöjligheter på katalognamn och bildfilsnamn.  
 Färskaste bilden ska visas först.  
 
 Sökning ska kunna ske på flera termer. Om två termer, A och B, används ska resultaten visas i ordningen AB, A, B.
 
+## Helskärmsläge
+
 Då man klickar på en bild ska den visas på hela skärmen.
 
+När hela skärmen används ska man kunna zooma i en bild med mushjulet. Punkten där musen står ska stå still under zoomandet. Bilden ska kunna flyttas med mus-drag.
+
+EXIF verkar inte gå att göra pga CORS.

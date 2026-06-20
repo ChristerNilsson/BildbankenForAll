@@ -152,13 +152,25 @@
       padding: 9px 12px;
     }
 
+    .viewer-stage {
+      cursor: grab;
+      overflow: hidden;
+      position: relative;
+      touch-action: none;
+    }
+
+    .viewer-stage.dragging {
+      cursor: grabbing;
+    }
+
     .viewer-image {
-      align-self: center;
       background: #111;
-      justify-self: center;
-      max-height: 100%;
-      max-width: 100%;
-      object-fit: contain;
+      left: 0;
+      position: absolute;
+      top: 0;
+      transform-origin: 0 0;
+      user-select: none;
+      -webkit-user-drag: none;
     }
 
     .viewer-meta {
@@ -186,7 +198,9 @@
         <div class="viewer-title" id="viewer-title"></div>
         <button id="viewer-close" type="button">Stäng</button>
       </div>
-      <img class="viewer-image" id="viewer-image" alt="">
+      <div class="viewer-stage" id="viewer-stage">
+        <img class="viewer-image" id="viewer-image" alt="">
+      </div>
       <div class="viewer-meta" id="viewer-meta"></div>
     </div>
   </dialog>
@@ -194,7 +208,20 @@
   <script>
     const state = {
       photos: [],
-      photographers: {}
+      photographers: {},
+      viewer: {
+        photo: null,
+        scale: 1,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        pointerId: null,
+        dragStartX: 0,
+        dragStartY: 0,
+        startX: 0,
+        startY: 0
+      }
     };
 
     const grid = document.querySelector("#grid");
@@ -202,6 +229,7 @@
     const count = document.querySelector("#count");
     const empty = document.querySelector("#empty");
     const viewer = document.querySelector("#viewer");
+    const viewerStage = document.querySelector("#viewer-stage");
     const viewerImage = document.querySelector("#viewer-image");
     const viewerTitle = document.querySelector("#viewer-title");
     const viewerMeta = document.querySelector("#viewer-meta");
@@ -216,13 +244,26 @@
       ]);
       state.photographers = photographers;
       state.photos = flattenPhotos(tree).sort((a, b) => b.date.localeCompare(a.date));
-      search.addEventListener("input", render);
+      search.value = queryFromUrl();
+      search.addEventListener("input", () => {
+        updateQueryUrl(search.value);
+        render();
+      });
       viewerClose.addEventListener("click", closeViewer);
       viewer.addEventListener("click", (event) => {
         if (event.target === viewer) closeViewer();
       });
+      viewerImage.addEventListener("load", resetViewerTransform);
+      viewerStage.addEventListener("wheel", zoomViewer, { passive: false });
+      viewerStage.addEventListener("pointerdown", startViewerDrag);
+      viewerStage.addEventListener("pointermove", dragViewer);
+      viewerStage.addEventListener("pointerup", stopViewerDrag);
+      viewerStage.addEventListener("pointercancel", stopViewerDrag);
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && viewer.open) closeViewer();
+      });
+      window.addEventListener("resize", () => {
+        if (viewer.open) resetViewerTransform();
       });
       render();
     }
@@ -313,42 +354,278 @@
       if (terms.length === 0) return photos;
 
       return photos
-        .map((photo) => ({ photo, score: matchScore(photo, terms) }))
-        .filter((entry) => entry.score > 0)
-        .sort((a, b) => b.score - a.score || b.photo.date.localeCompare(a.photo.date))
+        .map((photo) => ({ photo, rank: matchRank(photo, terms) }))
+        .filter((entry) => entry.rank !== null)
+        .sort((a, b) => compareRanks(a.rank, b.rank) || b.photo.date.localeCompare(a.photo.date))
         .map((entry) => entry.photo);
     }
 
-    function matchScore(photo, terms) {
+    function matchRank(photo, terms) {
       const haystack = photo.haystack;
-      const phrase = terms.join(" ");
-      const matched = terms.filter((term) => haystack.includes(term)).length;
-      if (matched === 0) return 0;
+      const positions = terms.map((term) => haystack.indexOf(term));
+      const matchedPositions = positions.filter((position) => position !== -1);
+      if (matchedPositions.length === 0) return null;
+      if (matchedPositions.length === terms.length) return [0, Math.min(...matchedPositions)];
 
-      let score = matched;
-      if (matched === terms.length) score += 100;
-      if (terms.length > 1 && haystack.includes(phrase)) score += 1000;
-      return score;
+      const firstMatchedTerm = positions.findIndex((position) => position !== -1);
+      return [firstMatchedTerm + 1, positions[firstMatchedTerm]];
+    }
+
+    function compareRanks(left, right) {
+      return left[0] - right[0] || left[1] - right[1];
     }
 
     function normalize(value) {
       return value.trim().toLowerCase();
     }
 
+    function queryFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("q") || params.get("query") || "";
+    }
+
+    function updateQueryUrl(value) {
+      const params = new URLSearchParams(window.location.search);
+      const query = value.trim();
+      if (query) {
+        params.set("q", query);
+      } else {
+        params.delete("q");
+        params.delete("query");
+      }
+      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
+      window.history.replaceState(null, "", next);
+    }
+
     function openViewer(photo) {
+      state.viewer.photo = photo;
       viewerImage.src = imageUrl(photo, 2400);
       viewerImage.alt = photo.name;
       viewerTitle.textContent = photo.name;
-      viewerMeta.textContent = [
-        photo.folders.join(" / "),
-        photographerName(photo.photographerKey)
-      ].filter(Boolean).join(" | ");
+      setViewerMeta(photo);
       viewer.showModal();
+      readExif(photo);
     }
 
     function closeViewer() {
       viewer.close();
       viewerImage.removeAttribute("src");
+      state.viewer.photo = null;
+      viewerStage.classList.remove("dragging");
+    }
+
+    function setViewerMeta(photo, exif = "") {
+      viewerMeta.textContent = [
+        photo.folders.join(" / "),
+        photographerName(photo.photographerKey),
+        exif
+      ].filter(Boolean).join(" | ");
+    }
+
+    function resetViewerTransform() {
+      if (!viewerImage.naturalWidth || !viewerImage.naturalHeight) return;
+      const bounds = viewerStage.getBoundingClientRect();
+      const scale = Math.min(bounds.width / viewerImage.naturalWidth, bounds.height / viewerImage.naturalHeight, 1);
+      state.viewer.scale = 1;
+      state.viewer.width = viewerImage.naturalWidth * scale;
+      state.viewer.height = viewerImage.naturalHeight * scale;
+      state.viewer.x = (bounds.width - state.viewer.width) / 2;
+      state.viewer.y = (bounds.height - state.viewer.height) / 2;
+      applyViewerTransform();
+    }
+
+    function applyViewerTransform() {
+      const view = state.viewer;
+      viewerImage.style.width = `${view.width}px`;
+      viewerImage.style.height = `${view.height}px`;
+      viewerImage.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
+    }
+
+    function zoomViewer(event) {
+      if (!viewerImage.naturalWidth || !viewerImage.naturalHeight) return;
+      event.preventDefault();
+      const bounds = viewerStage.getBoundingClientRect();
+      const pointerX = event.clientX - bounds.left;
+      const pointerY = event.clientY - bounds.top;
+      const view = state.viewer;
+      const nextScale = clamp(view.scale * Math.exp(-event.deltaY * 0.001), 0.5, 8);
+      const imageX = (pointerX - view.x) / view.scale;
+      const imageY = (pointerY - view.y) / view.scale;
+      view.x = pointerX - imageX * nextScale;
+      view.y = pointerY - imageY * nextScale;
+      view.scale = nextScale;
+      applyViewerTransform();
+    }
+
+    function startViewerDrag(event) {
+      if (event.button !== 0 || !viewerImage.naturalWidth) return;
+      const view = state.viewer;
+      view.pointerId = event.pointerId;
+      view.dragStartX = event.clientX;
+      view.dragStartY = event.clientY;
+      view.startX = view.x;
+      view.startY = view.y;
+      viewerStage.classList.add("dragging");
+      viewerStage.setPointerCapture(event.pointerId);
+    }
+
+    function dragViewer(event) {
+      const view = state.viewer;
+      if (view.pointerId !== event.pointerId) return;
+      view.x = view.startX + event.clientX - view.dragStartX;
+      view.y = view.startY + event.clientY - view.dragStartY;
+      applyViewerTransform();
+    }
+
+    function stopViewerDrag(event) {
+      const view = state.viewer;
+      if (view.pointerId !== event.pointerId) return;
+      view.pointerId = null;
+      viewerStage.classList.remove("dragging");
+      if (viewerStage.hasPointerCapture(event.pointerId)) {
+        viewerStage.releasePointerCapture(event.pointerId);
+      }
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    async function readExif(photo) {
+      const url = imageUrl(photo, 2400);
+      if (!canReadExifUrl(url)) return;
+
+      try {
+        const response = await fetch(url, { cache: "force-cache" });
+        if (!response.ok) return;
+        const tags = parseExif(await response.arrayBuffer());
+        if (state.viewer.photo === photo && tags.length > 0) {
+          setViewerMeta(photo, tags.join(" | "));
+        }
+      } catch (error) {
+        console.warn("Kunde inte läsa EXIF", error);
+      }
+    }
+
+    function canReadExifUrl(url) {
+      const parsed = new URL(url, window.location.href);
+      return parsed.origin === window.location.origin;
+    }
+
+    function parseExif(buffer) {
+      const view = new DataView(buffer);
+      if (view.byteLength < 4 || view.getUint16(0) !== 0xffd8) return [];
+
+      let offset = 2;
+      while (offset + 4 < view.byteLength) {
+        if (view.getUint8(offset) !== 0xff) return [];
+        const marker = view.getUint8(offset + 1);
+        const size = view.getUint16(offset + 2);
+        if (marker === 0xe1 && ascii(view, offset + 4, 6) === "Exif\0\0") {
+          return parseTiffExif(view, offset + 10);
+        }
+        offset += 2 + size;
+      }
+      return [];
+    }
+
+    function parseTiffExif(view, tiffOffset) {
+      const littleEndian = ascii(view, tiffOffset, 2) === "II";
+      const read16 = (offset) => view.getUint16(offset, littleEndian);
+      const read32 = (offset) => view.getUint32(offset, littleEndian);
+      const firstIfd = tiffOffset + read32(tiffOffset + 4);
+      const tags = readIfd(view, tiffOffset, firstIfd, littleEndian, read16, read32);
+      const exifOffset = tags.get(0x8769);
+      const exifTags = exifOffset ? readIfd(view, tiffOffset, tiffOffset + exifOffset, littleEndian, read16, read32) : new Map();
+
+      return [
+        textTag(tags, 0x010f, "Kamera"),
+        textTag(tags, 0x0110, ""),
+        textTag(exifTags, 0x9003, "Tagen"),
+        rationalTag(exifTags, 0x829a, "Tid", "s"),
+        apertureTag(exifTags, 0x829d),
+        isoTag(exifTags),
+        rationalTag(exifTags, 0x920a, "Brännvidd", " mm"),
+        signedRationalTag(exifTags, 0x9204, "Exponeringskompensation", " EV"),
+        textTag(exifTags, 0xa434, "Objektiv"),
+        pixelSizeTag(exifTags)
+      ].filter(Boolean);
+    }
+
+    function readIfd(view, tiffOffset, ifdOffset, littleEndian, read16, read32) {
+      const result = new Map();
+      if (ifdOffset <= 0 || ifdOffset + 2 > view.byteLength) return result;
+      const count = read16(ifdOffset);
+      for (let index = 0; index < count; index += 1) {
+        const entry = ifdOffset + 2 + index * 12;
+        if (entry + 12 > view.byteLength) break;
+        const tag = read16(entry);
+        const type = read16(entry + 2);
+        const amount = read32(entry + 4);
+        const valueOffset = entry + 8;
+        result.set(tag, exifValue(view, tiffOffset, valueOffset, type, amount, littleEndian, read16, read32));
+      }
+      return result;
+    }
+
+    function exifValue(view, tiffOffset, valueOffset, type, amount, littleEndian, read16, read32) {
+      const bytes = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 7: 1, 9: 4, 10: 8 }[type] || 1;
+      const offset = bytes * amount <= 4 ? valueOffset : tiffOffset + read32(valueOffset);
+      if (offset < 0 || offset >= view.byteLength) return null;
+      if (type === 2) return ascii(view, offset, amount).replace(/\0+$/, "").trim();
+      if (type === 3) return read16(offset);
+      if (type === 4) return read32(offset);
+      if (type === 5) return read32(offset) / Math.max(read32(offset + 4), 1);
+      if (type === 9) return view.getInt32(offset, littleEndian);
+      if (type === 10) return view.getInt32(offset, littleEndian) / Math.max(view.getInt32(offset + 4, littleEndian), 1);
+      return null;
+    }
+
+    function textTag(tags, key, label) {
+      const value = tags.get(key);
+      if (!value) return "";
+      return label ? `${label}: ${value}` : value;
+    }
+
+    function rationalTag(tags, key, label, suffix) {
+      const value = tags.get(key);
+      if (!value) return "";
+      const formatted = value < 1 ? `1/${Math.round(1 / value)}` : trimNumber(value);
+      return `${label}: ${formatted}${suffix}`;
+    }
+
+    function signedRationalTag(tags, key, label, suffix) {
+      const value = tags.get(key);
+      if (value === null || value === undefined) return "";
+      return `${label}: ${trimNumber(value)}${suffix}`;
+    }
+
+    function apertureTag(tags) {
+      const value = tags.get(0x829d);
+      return value ? `Bländare: f/${trimNumber(value)}` : "";
+    }
+
+    function isoTag(tags) {
+      const value = tags.get(0x8827);
+      return value ? `ISO: ${value}` : "";
+    }
+
+    function pixelSizeTag(tags) {
+      const width = tags.get(0xa002);
+      const height = tags.get(0xa003);
+      return width && height ? `EXIF-storlek: ${width} x ${height}` : "";
+    }
+
+    function trimNumber(value) {
+      return Number(value.toFixed(2)).toString();
+    }
+
+    function ascii(view, offset, length) {
+      let text = "";
+      for (let index = 0; index < length && offset + index < view.byteLength; index += 1) {
+        text += String.fromCharCode(view.getUint8(offset + index));
+      }
+      return text;
     }
 
     function photographerName(key) {
@@ -357,7 +634,7 @@
 
     function imageUrl(photo, size = 1200) {
       if (/^https?:\/\//.test(photo.key)) return photo.key;
-      if (/^[A-Za-z0-9_-]{20,}$/.test(photo.key)) {
+      if (/^[A-Za-z0-9_-]{10,}$/.test(photo.key)) {
         return `https://drive.google.com/thumbnail?id=${encodeURIComponent(photo.key)}&sz=w${size}`;
       }
       return encodeURI(photo.key);

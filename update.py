@@ -56,6 +56,7 @@ class DriveItem:
 
 def main() -> None:
     global OAUTH_TOKEN
+    start_log_section()
     log("Startar uppdatering.")
     OAUTH_TOKEN = load_oauth_token()
     if OAUTH_TOKEN:
@@ -171,6 +172,12 @@ def log(message: str) -> None:
     print(line)
     with LOG_FILE.open("a", encoding="utf-8") as file:
         file.write(line + "\n")
+
+
+def start_log_section() -> None:
+    print()
+    with LOG_FILE.open("a", encoding="utf-8") as file:
+        file.write("\n")
 
 
 def load_oauth_token() -> str:

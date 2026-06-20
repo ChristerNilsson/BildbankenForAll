@@ -165,3 +165,11 @@
 2026-06-20T14:55:53 Skapade CN.changes.json.
 2026-06-20T14:55:53 Skapade photos.json med 1535 bilder.
 2026-06-20T14:55:53 Uppdatering klar.
+
+2026-06-20T15:26:06 Startar uppdatering.
+2026-06-20T15:26:06 OAuth används för Drive API och ändringskontroll.
+2026-06-20T15:26:06 Hämtar CN.
+2026-06-20T15:26:06 Inga Drive-ändringar för CN. CN.json lämnas oförändrad.
+2026-06-20T15:26:06 Skapade CN.changes.json.
+2026-06-20T15:26:06 Skapade photos.json med 1535 bilder.
+2026-06-20T15:26:06 Uppdatering klar.
