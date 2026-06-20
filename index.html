@@ -346,7 +346,7 @@
 
       caption.append(name, meta);
       figure.append(image, caption);
-      figure.addEventListener("click", () => openViewer(photo));
+      figure.addEventListener("click", () => openPhoto(photo));
       return figure;
     }
 
@@ -395,6 +395,15 @@
       }
       const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
       window.history.replaceState(null, "", next);
+    }
+
+    function openPhoto(photo) {
+      const fileUrl = driveFileUrl(photo);
+      if (fileUrl) {
+        window.open(fileUrl, "_blank", "noopener");
+        return;
+      }
+      openViewer(photo);
     }
 
     function openViewer(photo) {
@@ -638,6 +647,13 @@
         return `https://drive.google.com/thumbnail?id=${encodeURIComponent(photo.key)}&sz=w${size}`;
       }
       return encodeURI(photo.key);
+    }
+
+    function driveFileUrl(photo) {
+      if (/^[A-Za-z0-9_-]{10,}$/.test(photo.key)) {
+        return `https://drive.google.com/file/d/${encodeURIComponent(photo.key)}/view?usp=drive_link`;
+      }
+      return "";
     }
   </script>
 </body>

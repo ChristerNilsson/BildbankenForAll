@@ -81,8 +81,6 @@ Sökning ska kunna ske på flera termer. Om två termer, A och B, används ska r
 
 ## Helskärmsläge
 
-Då man klickar på en bild ska den visas på hela skärmen.
-
-När hela skärmen används ska man kunna zooma i en bild med mushjulet. Punkten där musen står ska stå still under zoomandet. Bilden ska kunna flyttas med mus-drag.
-
-EXIF verkar inte gå att göra pga CORS.
+Då man klickar på en bild ska den visas på hela skärmen med en länk med följande utseende:
+Exempel: https://drive.google.com/file/d/1_eXXpVdeaxtgSX9wJX5ftuim4Hmm7G-g/view?usp=drive_link
+Man ska bara behöva klicka en gång, inte två via en "Öppna" knapp.
