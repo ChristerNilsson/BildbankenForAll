@@ -83,14 +83,14 @@ Problemet jag trodde fanns i index.html, beror troligen på att Google Drive int
 
 Visa namnet på aktuell katalog eller Home.  
 Visa inte katalogknappar med (0) bilder.  
-Om det finns underkataloger till en turnering verkar inte dessa räknas. Räkningen måste vara rekursiv.  
+Om det finns underkataloger till en turnering ska dessa räknas rekursivt.  
 
-När jag visar alla bilder på toppnivå, fylls bilderna på väldigt långsamt. Bara de bilder som syns i fönstret ska hämtas. När man scrollar ska fler bilder hämtas. Detta kallas oändlig horisont.
+Bara de bilder som syns i fönstret ska hämtas. När man scrollar ska fler bilder hämtas.
 
 Håll reda på aktuell katalog. Från start visas alla kataloger, i fallande ordning.
 Initialt visas alla kataloger på aktuell nivå som knappar.
 När man klickar på en katalog blir den katalogen aktuell katalog.
-Man ska kunna gå upp till föräldrakatalogen med Up.
+Man ska kunna gå upp till föräldrakatalogen med knappen `Upp`.
 
 Varje katalog ska visa hur många träffar som finns i den. Detta ska stå inom parentes i knappen.
 
