@@ -79,6 +79,8 @@ Starta inte någon web server, jag använder Go Live!
 
 ## Visning
 
+Bilderna ska alltid visas i fallande tidsordning (EXIF-timestamp då bilden togs)
+
 I katalognamn och filnamn ska följande tecken bytas ut (enbart vid visning):
 
 |Från|Till|
@@ -94,8 +96,6 @@ Avgränsarna / samt | ska ersättas med •
 Om strängen `T18469` finns i katalognamnet ska den bytas mot en länk:
 `https://member.schack.se/ShowTournamentServlet?id=18469&listingtype=2`
 Det gäller strängen T följd av fem siffror. Texten ska vara `Resultat`
-
-Bilderna ska visas i fallande tidsordning (EXIT-timestamp då bilden togs)
 
 Bildtexten ska även visa EXIF-timestamp på formatet YYYY-MM-DD HH:MM:SS
 

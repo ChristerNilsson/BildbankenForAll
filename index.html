@@ -375,14 +375,14 @@
       const positions = terms.map((term) => haystack.indexOf(term));
       const matchedPositions = positions.filter((position) => position !== -1);
       if (matchedPositions.length === 0) return null;
-      if (matchedPositions.length === terms.length) return [0, Math.min(...matchedPositions)];
+      if (matchedPositions.length === terms.length) return 0;
 
       const firstMatchedTerm = positions.findIndex((position) => position !== -1);
-      return [firstMatchedTerm + 1, positions[firstMatchedTerm]];
+      return firstMatchedTerm + 1;
     }
 
     function compareRanks(left, right) {
-      return left[0] - right[0] || left[1] - right[1];
+      return left - right;
     }
 
     function normalize(value) {
