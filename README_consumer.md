@@ -14,13 +14,14 @@ wasa klass
 
 Träffar som innehåller båda orden visas först. Därefter visas träffar på första ordet och sedan träffar på andra ordet.
 
-Om sökfältet är tomt visas de tio senaste bilderna.
+Om sökfältet är tomt visas alla bilder i den aktuella katalogen.
+Bilder läses in efter hand när du scrollar.
 
 ## Kataloger
 
 Katalogknapparna visar katalogerna på aktuell nivå. Siffran inom parentes visar hur många bilder som finns i katalogen. Klicka på en katalog för att gå ner i den. Använd `Up` för att gå tillbaka till föräldrakatalogen.
 
-Sökning och listan med de tio senaste bilderna gäller inom den aktuella katalogen.
+Sökning och bildlistan gäller inom den aktuella katalogen.
 
 Turneringskoder i katalognamn visas som länken `Resultat`, till exempel för `T18469`.
 Bildtexten visar kataloger på första raden och fotografnyckel samt EXIF-tid på egen rad, till exempel `CN @ 2022-07-10 15:58:00`.

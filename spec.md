@@ -79,12 +79,16 @@ Starta inte någon web server, jag använder Go Live!
 
 ## Visning
 
-Håll reda på aktuell katalog. Från start visas alla kataloger.
+När jag visar alla bilder på toppnivå, fylls bilderna på väldigt långsamt. Bara de bilder som syns i fönstret ska hämtas. När man scrollar ska fler bilder hämtas. Detta kallas oändlig horisont.
+
+Håll reda på aktuell katalog. Från start visas alla kataloger, i fallande ordning.
 Initialt visas alla kataloger på aktuell nivå som knappar.
 När man klickar på en katalog blir den katalogen aktuell katalog.
 Man ska kunna gå upp till föräldrakatalogen med Up.
 
 Varje katalog ska visa hur många träffar som finns i den. Detta ska stå inom parentes i knappen.
+
+Man ska kunna se alla bilder i aktuell katalog, även på toppnivån.
 
 Bilderna ska alltid visas i fallande tidsordning (EXIF-timestamp då bilden togs)
 
@@ -117,7 +121,6 @@ Fotograf och timestamp ligger på en egen rad.
 
 Då man ändrar i queryfältet ska urlen uppdateras. Den ska även läsa in det som står där initialt.
 
-Om query är tomt ska bara de senaste tio bilderna visas.  
 Programmet ska ha sökmöjligheter på katalognamn och bildfilsnamn.  
 Färskaste bilden ska visas först.  
 

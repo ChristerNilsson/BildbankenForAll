@@ -141,6 +141,10 @@
       margin: 32px 0;
     }
 
+    .load-more {
+      height: 1px;
+    }
+
     dialog {
       background: #111;
       border: 0;
@@ -228,6 +232,7 @@
   </header>
   <main>
     <div class="grid" id="grid"></div>
+    <div class="load-more" id="load-more"></div>
     <p class="empty" id="empty" hidden>Inga bilder matchar sökningen.</p>
   </main>
   <dialog id="viewer">
@@ -247,6 +252,8 @@
     const state = {
       tree: {},
       photos: [],
+      visiblePhotos: [],
+      renderedCount: 0,
       photographers: {},
       currentPath: [],
       viewer: {
@@ -265,6 +272,7 @@
     };
 
     const grid = document.querySelector("#grid");
+    const loadMore = document.querySelector("#load-more");
     const catalogs = document.querySelector("#catalogs");
     const search = document.querySelector("#search");
     const count = document.querySelector("#count");
@@ -301,6 +309,7 @@
       viewerStage.addEventListener("pointermove", dragViewer);
       viewerStage.addEventListener("pointerup", stopViewerDrag);
       viewerStage.addEventListener("pointercancel", stopViewerDrag);
+      initInfiniteScroll();
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && viewer.open) closeViewer();
       });
@@ -366,12 +375,54 @@
       const terms = query.split(/\s+/).filter(Boolean);
       const photos = photosInCurrentCatalog(state.photos);
       const matches = rankMatches(photos, terms);
-      const visible = query ? matches : matches.slice(0, 10);
+      state.visiblePhotos = matches;
+      state.renderedCount = 0;
 
       renderCatalogs();
-      grid.replaceChildren(...visible.map(renderPhoto));
-      empty.hidden = visible.length > 0;
-      count.textContent = query ? `${visible.length} av ${photos.length}` : `${visible.length} senaste`;
+      grid.replaceChildren();
+      renderNextPhotos();
+      empty.hidden = state.visiblePhotos.length > 0;
+      count.textContent = query ? `${state.visiblePhotos.length} av ${photos.length}` : `${state.visiblePhotos.length} bilder`;
+      updateLoadMoreVisibility();
+    }
+
+    function initInfiniteScroll() {
+      if (!("IntersectionObserver" in window)) {
+        window.addEventListener("scroll", () => {
+          if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 800) {
+            renderNextPhotos();
+          }
+        }, { passive: true });
+        return;
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          renderNextPhotos();
+        }
+      }, { rootMargin: "900px 0px" });
+      observer.observe(loadMore);
+    }
+
+    function renderNextPhotos() {
+      const batchSize = 40;
+      const nextPhotos = state.visiblePhotos.slice(state.renderedCount, state.renderedCount + batchSize);
+      if (nextPhotos.length === 0) {
+        updateLoadMoreVisibility();
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      for (const photo of nextPhotos) {
+        fragment.append(renderPhoto(photo));
+      }
+      grid.append(fragment);
+      state.renderedCount += nextPhotos.length;
+      updateLoadMoreVisibility();
+    }
+
+    function updateLoadMoreVisibility() {
+      loadMore.hidden = state.renderedCount >= state.visiblePhotos.length;
     }
 
     function renderCatalogs() {
@@ -415,7 +466,7 @@
       return Object.entries(node || {})
         .filter(([, value]) => value && typeof value === "object" && !Array.isArray(value))
         .map(([name]) => name)
-        .sort((left, right) => displayName(left).localeCompare(displayName(right), "sv"));
+        .sort((left, right) => displayName(right).localeCompare(displayName(left), "sv"));
     }
 
     function photosInCurrentCatalog(photos) {
