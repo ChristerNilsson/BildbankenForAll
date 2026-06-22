@@ -8,7 +8,7 @@ Detta projekt består av:
 
 # update.py
 
-Pythonprogrammet ska hämta nytillkomna filer i fotografernas kataloger.
+Pythonprogrammet ska hämta tillkomna/ändrade katalognamn och filnamn i fotografernas kataloger.
 
 Fotografernas kataloger ligger på olika Google Drives.
 
@@ -16,15 +16,11 @@ photos.json ska innehålla ett katalogträd där löven utgörs av länkar till 
 
 photographers.json innehåller registrerade fotografer samt url till deras bilder.
 
-Detta program kan inte läsa lokala filer. 
-
-Tills vidare lagras de båda json-filerna lokalt.
-
 För att få bättre prestanda, ska varje fotograf ska sparas i en egen json-fil. T ex CN.json.
 
-Dessa filer ska sparas i katalogen photographers tillsammans med manifest och changes.
+Denna json-fil ska sparas i katalogen photographers
 
-Jag antar att du kontrollerar om något nytt tillkommit, för varje fotograf, innan du återskapar fotografens json.
+Fotografens .json ska bara återskapas om något ändrats på fotografens Google Drive
 
 Logga till update.log. Ska även innehålla tidpunkter. Logga varje json-fil som skapas.
 Före "Startar uppdatering" ska en blank rad skrivas ut.

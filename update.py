@@ -89,12 +89,13 @@ def main() -> None:
         old_manifest = read_json_with_legacy(manifest_file, ROOT / manifest_file.name, {})
         changes_state = read_json_with_legacy(changes_file, ROOT / changes_file.name, {})
 
-        if OAUTH_TOKEN and old_photographer_photos and old_manifest and changes_state:
+        if OAUTH_TOKEN and old_photographer_photos and changes_state:
             changed = photographer_has_drive_changes(changes_state, old_manifest)
             if not changed:
                 log_detail(f"Inga Drive-ändringar för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
                 ensure_json_file(photographer_file, old_photographer_photos)
-                ensure_json_file(manifest_file, old_manifest)
+                if old_manifest:
+                    ensure_json_file(manifest_file, old_manifest)
                 write_json(changes_file, changes_state)
                 log_detail(f"Skapade {changes_file.name}.")
                 total += count_photos(old_photographer_photos)
@@ -235,6 +236,8 @@ def photographer_has_drive_changes(changes_state: dict[str, Any], manifest: dict
         tracked_ids = {entry.get("id", "") for entry in manifest.get("items", [])}
         tracked_ids.add(manifest.get("folderId", ""))
         tracked_ids.discard("")
+    if not tracked_ids:
+        return True
 
     try:
         changes, new_page_token = list_drive_changes(page_token)
