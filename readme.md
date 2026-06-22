@@ -26,9 +26,6 @@
 ## PYTHON Effektivisering
 
 * update.py kan fråga efter flera fotografer samtidigt.
-* Jag förstår inte varför man måste spara ett manifest.
-	* Antingen finns ändringar => återskapa denna fotografs json
-	* Eller behöver inget göras.
 
 
 ### DONE ###################

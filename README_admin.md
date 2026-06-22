@@ -33,7 +33,6 @@ Programmet läser `photographers.json`, hämtar katalogträden från Google Driv
 
 - `photos.json`
 - `photographers/<KEY>.json`
-- `photographers/<KEY>.manifest.json`
 - `photographers/<KEY>.changes.json`
 - `update.log`
 
@@ -44,7 +43,7 @@ Programmet läser `photographers.json`, hämtar katalogträden från Google Driv
 Efter en lyckad uppdatering committas datafilerna:
 
 ```powershell
-git add photos.json photographers/*.json photographers/*.manifest.json photographers/*.changes.json update.log
+git add photos.json photographers/*.json photographers/*.changes.json update.log
 git commit -m "Update photo index"
 git push
 ```
@@ -66,4 +65,3 @@ Om två fotografer har samma sökväg kan den senare skriva över den tidigare i
 ## Viktigt
 
 Google Drive-filens id är det stabila. Fotografen kan byta katalognamn och filnamn utan att bilden slutar fungera, så länge filen inte raderas och laddas upp igen.
-

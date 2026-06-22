@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import html
 import json
 import os
@@ -83,57 +82,39 @@ def main() -> None:
 
         log_step(f"Hämtar {photographer_key}.")
         photographer_file = PHOTOGRAPHER_DATA_DIR / f"{photographer_key}.json"
-        manifest_file = PHOTOGRAPHER_DATA_DIR / f"{photographer_key}.manifest.json"
         changes_file = PHOTOGRAPHER_DATA_DIR / f"{photographer_key}.changes.json"
         old_photographer_photos = read_json_with_legacy(photographer_file, ROOT / photographer_file.name, {})
-        old_manifest = read_json_with_legacy(manifest_file, ROOT / manifest_file.name, {})
         changes_state = read_json_with_legacy(changes_file, ROOT / changes_file.name, {})
 
         if OAUTH_TOKEN and old_photographer_photos and changes_state:
-            changed = photographer_has_drive_changes(changes_state, old_manifest)
+            changed = photographer_has_drive_changes(changes_state)
             if not changed:
                 log_detail(f"Inga Drive-ändringar för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
                 ensure_json_file(photographer_file, old_photographer_photos)
-                if old_manifest:
-                    ensure_json_file(manifest_file, old_manifest)
                 write_json(changes_file, changes_state)
-                log_detail(f"Skapade {changes_file.name}.")
                 total += count_photos(old_photographer_photos)
                 merge_tree(photos, old_photographer_photos)
                 continue
 
         photographer_photos: dict[str, Any] = {}
-        manifest_entries: list[dict[str, Any]] = []
+        drive_entries: list[dict[str, Any]] = []
 
-        add_drive_folder(photographer_photos, photographer_key, folder_id, [], manifest_entries)
-        manifest = build_manifest(folder_id, manifest_entries)
+        add_drive_folder(photographer_photos, photographer_key, folder_id, [], drive_entries)
         count = count_photos(photographer_photos)
 
         if count == 0 and old_photographer_photos:
             log_detail(f"Inga Drive-poster hittades för {photographer_key}. Återanvänder {photographer_file.name}.")
             photographer_photos = old_photographer_photos
             count = count_photos(photographer_photos)
-        elif manifest.get("hash") == old_manifest.get("hash") and old_photographer_photos:
-            log_detail(f"Inget nytt för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
-            photographer_photos = old_photographer_photos
-            count = count_photos(photographer_photos)
-            ensure_json_file(photographer_file, photographer_photos)
-            ensure_json_file(manifest_file, manifest)
         elif photographer_photos != old_photographer_photos:
             write_json(photographer_file, photographer_photos)
             log_detail(f"Skapade {photographer_file.name} med {count} bilder.")
-            write_json(manifest_file, manifest)
-            log_detail(f"Skapade {manifest_file.name} med {len(manifest_entries)} poster.")
         else:
             log_detail(f"Inget nytt för {photographer_key}. {photographer_file.name} lämnas oförändrad.")
-            if manifest != old_manifest:
-                write_json(manifest_file, manifest)
-                log_detail(f"Skapade {manifest_file.name} med {len(manifest_entries)} poster.")
 
         if OAUTH_TOKEN:
             try:
-                write_json(changes_file, build_changes_state(manifest))
-                log_detail(f"Skapade {changes_file.name}.")
+                write_json(changes_file, build_changes_state(folder_id, drive_entries))
             except RuntimeError as error:
                 log_detail(f"Kunde inte skapa {changes_file.name}: {error}")
 
@@ -226,16 +207,12 @@ def drive_id_from_url(url: str) -> str | None:
     return None
 
 
-def photographer_has_drive_changes(changes_state: dict[str, Any], manifest: dict[str, Any]) -> bool:
+def photographer_has_drive_changes(changes_state: dict[str, Any]) -> bool:
     page_token = changes_state.get("pageToken", "")
     if not page_token:
         return True
 
     tracked_ids = set(changes_state.get("trackedIds", []))
-    if not tracked_ids:
-        tracked_ids = {entry.get("id", "") for entry in manifest.get("items", [])}
-        tracked_ids.add(manifest.get("folderId", ""))
-        tracked_ids.discard("")
     if not tracked_ids:
         return True
 
@@ -278,9 +255,9 @@ def list_drive_changes(page_token: str) -> tuple[list[dict[str, Any]], str]:
             return changes, new_start_page_token or page_token
 
 
-def build_changes_state(manifest: dict[str, Any]) -> dict[str, Any]:
-    tracked_ids = {manifest.get("folderId", "")}
-    for entry in manifest.get("items", []):
+def build_changes_state(folder_id: str, entries: list[dict[str, Any]]) -> dict[str, Any]:
+    tracked_ids = {folder_id}
+    for entry in entries:
         tracked_ids.add(entry.get("id", ""))
     tracked_ids.discard("")
 
@@ -303,7 +280,7 @@ def add_drive_folder(
     photographer_key: str,
     folder_id: str,
     path: list[str],
-    manifest_entries: list[dict[str, Any]],
+    drive_entries: list[dict[str, Any]],
     visited: set[str] | None = None,
 ) -> int:
     if visited is None:
@@ -320,7 +297,7 @@ def add_drive_folder(
 
     changed = 0
     for item in sorted(items, key=lambda entry: (not entry.is_folder, entry.name.lower())):
-        manifest_entries.append(
+        drive_entries.append(
             {
                 "id": item.id,
                 "name": item.name,
@@ -331,7 +308,7 @@ def add_drive_folder(
             }
         )
         if item.is_folder:
-            changed += add_drive_folder(photos, photographer_key, item.id, [*path, item.name], manifest_entries, visited)
+            changed += add_drive_folder(photos, photographer_key, item.id, [*path, item.name], drive_entries, visited)
         elif item.is_image:
             insert_photo(photos, path, item.name, [item.id, photographer_key, item.taken_time])
             changed += 1
@@ -434,26 +411,6 @@ def fetch_text(url: str) -> str:
 
 def request(url: str) -> Request:
     return Request(url, headers={"User-Agent": USER_AGENT})
-
-
-def build_manifest(folder_id: str, entries: list[dict[str, Any]]) -> dict[str, Any]:
-    sorted_entries = sorted(entries, key=lambda entry: (entry["path"], entry["id"]))
-    encoded = json.dumps(sorted_entries, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return {
-        "folderId": folder_id,
-        "method": drive_method(),
-        "hash": hashlib.sha256(encoded).hexdigest(),
-        "count": len(sorted_entries),
-        "items": sorted_entries,
-    }
-
-
-def drive_method() -> str:
-    if OAUTH_TOKEN:
-        return "oauth"
-    if GOOGLE_DRIVE_API_KEY:
-        return "drive-api-key"
-    return "html"
 
 
 def parse_drive_items(body: str) -> list[DriveItem]:

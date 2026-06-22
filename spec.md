@@ -8,6 +8,8 @@ Detta projekt består av:
 
 # update.py
 
+Inga manifest.json ska skapas.
+
 Pythonprogrammet ska hämta tillkomna/ändrade katalognamn och filnamn i fotografernas kataloger.
 
 Fotografernas kataloger ligger på olika Google Drives.
@@ -31,10 +33,8 @@ Vill se lite indenteringar i logfilen:
 2026-06-20T18:06:00  OAuth används för Drive API och ändringskontroll.
 2026-06-20T18:06:00  Hämtar CN.
 2026-06-20T18:06:00   Inga Drive-ändringar för CN. CN.json lämnas oförändrad.
-2026-06-20T18:06:00   Skapade CN.changes.json.
 2026-06-20T18:06:00  Hämtar LOAH.
 2026-06-20T18:06:01   Inga Drive-ändringar för LOAH. LOAH.json lämnas oförändrad.
-2026-06-20T18:06:01   Skapade LOAH.changes.json.
 2026-06-20T18:06:01  Skapade photos.json med 2311 bilder.
 2026-06-20T18:06:01 Uppdatering klar.
 ```
