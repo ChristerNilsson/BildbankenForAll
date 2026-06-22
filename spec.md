@@ -79,6 +79,13 @@ Starta inte någon web server, jag använder Go Live!
 
 ## Visning
 
+Håll reda på aktuell katalog. Från start visas alla kataloger.
+Initialt visas alla kataloger på aktuell nivå som knappar.
+När man klickar på en katalog blir den katalogen aktuell katalog.
+Man ska kunna gå upp till föräldrakatalogen med Up.
+
+Varje katalog ska visa hur många träffar som finns i den. Detta ska stå inom parentes i knappen.
+
 Bilderna ska alltid visas i fallande tidsordning (EXIF-timestamp då bilden togs)
 
 I katalognamn och filnamn ska följande tecken bytas ut (enbart vid visning):

@@ -57,6 +57,35 @@
       white-space: nowrap;
     }
 
+    .catalogs {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+      max-width: 1100px;
+    }
+
+    .catalog-button {
+      background: #eef1ed;
+      border: 1px solid #c8d0cc;
+      border-radius: 6px;
+      color: #1e2528;
+      cursor: pointer;
+      font: inherit;
+      padding: 8px 10px;
+    }
+
+    .catalog-button:hover {
+      background: #e4e9e4;
+    }
+
+    .catalog-button.up {
+      background: #1e2528;
+      border-color: #1e2528;
+      color: #ffffff;
+    }
+
     main {
       padding: 24px clamp(16px, 4vw, 48px) 48px;
     }
@@ -195,6 +224,7 @@
       <input id="search" type="search" placeholder="Sök på katalog eller filnamn" autocomplete="off">
       <span class="count" id="count"></span>
     </div>
+    <div class="catalogs" id="catalogs"></div>
   </header>
   <main>
     <div class="grid" id="grid"></div>
@@ -215,8 +245,10 @@
 
   <script>
     const state = {
+      tree: {},
       photos: [],
       photographers: {},
+      currentPath: [],
       viewer: {
         photo: null,
         scale: 1,
@@ -233,6 +265,7 @@
     };
 
     const grid = document.querySelector("#grid");
+    const catalogs = document.querySelector("#catalogs");
     const search = document.querySelector("#search");
     const count = document.querySelector("#count");
     const empty = document.querySelector("#empty");
@@ -251,6 +284,7 @@
         fetchJson("photos.json", {})
       ]);
       state.photographers = photographers;
+      state.tree = tree;
       state.photos = flattenPhotos(tree).sort(compareFreshness);
       search.value = queryFromUrl();
       search.addEventListener("input", () => {
@@ -304,6 +338,7 @@
               displayName: displayPhotoName,
               key,
               photographerKey,
+              catalogPath: path,
               folders,
               displayFolders,
               date: findDate([...path, name]),
@@ -329,12 +364,73 @@
     function render() {
       const query = normalize(search.value);
       const terms = query.split(/\s+/).filter(Boolean);
-      const matches = rankMatches(state.photos, terms);
+      const photos = photosInCurrentCatalog(state.photos);
+      const matches = rankMatches(photos, terms);
       const visible = query ? matches : matches.slice(0, 10);
 
+      renderCatalogs();
       grid.replaceChildren(...visible.map(renderPhoto));
       empty.hidden = visible.length > 0;
-      count.textContent = query ? `${visible.length} av ${state.photos.length}` : `${visible.length} senaste`;
+      count.textContent = query ? `${visible.length} av ${photos.length}` : `${visible.length} senaste`;
+    }
+
+    function renderCatalogs() {
+      const buttons = [];
+      if (state.currentPath.length > 0) {
+        buttons.push(catalogButton("Up", () => {
+          state.currentPath = state.currentPath.slice(0, -1);
+          render();
+        }, "up"));
+      }
+
+      for (const name of childCatalogNames(currentCatalogNode())) {
+        const childPath = [...state.currentPath, name];
+        buttons.push(catalogButton(`${displayName(name)} (${photoCountInCatalog(childPath)})`, () => {
+          state.currentPath = [...state.currentPath, name];
+          render();
+        }));
+      }
+
+      catalogs.replaceChildren(...buttons);
+    }
+
+    function catalogButton(label, onClick, className = "") {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `catalog-button ${className}`.trim();
+      button.textContent = label;
+      button.addEventListener("click", onClick);
+      return button;
+    }
+
+    function currentCatalogNode() {
+      let node = state.tree;
+      for (const part of state.currentPath) {
+        node = node?.[part];
+      }
+      return node || {};
+    }
+
+    function childCatalogNames(node) {
+      return Object.entries(node || {})
+        .filter(([, value]) => value && typeof value === "object" && !Array.isArray(value))
+        .map(([name]) => name)
+        .sort((left, right) => displayName(left).localeCompare(displayName(right), "sv"));
+    }
+
+    function photosInCurrentCatalog(photos) {
+      if (state.currentPath.length === 0) return photos;
+      return photos.filter((photo) => pathStartsWith(photo.catalogPath, state.currentPath));
+    }
+
+    function photoCountInCatalog(path) {
+      const terms = normalize(search.value).split(/\s+/).filter(Boolean);
+      const photos = state.photos.filter((photo) => pathStartsWith(photo.catalogPath, path));
+      return rankMatches(photos, terms).length;
+    }
+
+    function pathStartsWith(path, prefix) {
+      return prefix.every((part, index) => path[index] === part);
     }
 
     function renderPhoto(photo) {
