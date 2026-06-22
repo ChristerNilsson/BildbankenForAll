@@ -2,7 +2,7 @@ UTF-8 gäller i alla textfiler.
 
 Detta projekt består av:
 
-1. Ett pythonprogram, update.py, som sammanställer index.json för ett antal fotografer
+1. Ett pythonprogram, update.py, som sammanställer photos.json för ett antal fotografer
 
 2. Ett webprogram, index.html, som tillåter sökning och visning mha photos.json
 
