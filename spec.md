@@ -79,6 +79,12 @@ Starta inte någon web server, jag använder Go Live!
 
 ## Visning
 
+Problemet jag trodde fanns i index.html, beror troligen på att Google Drive inte levererade bilder.
+
+Visa namnet på aktuell katalog eller Home.  
+Visa inte katalogknappar med (0) bilder.  
+Om det finns underkataloger till en turnering verkar inte dessa räknas. Räkningen måste vara rekursiv.  
+
 När jag visar alla bilder på toppnivå, fylls bilderna på väldigt långsamt. Bara de bilder som syns i fönstret ska hämtas. När man scrollar ska fler bilder hämtas. Detta kallas oändlig horisont.
 
 Håll reda på aktuell katalog. Från start visas alla kataloger, i fallande ordning.

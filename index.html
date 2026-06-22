@@ -57,6 +57,13 @@
       white-space: nowrap;
     }
 
+    .current-catalog {
+      color: #536160;
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0 0 12px;
+    }
+
     .catalogs {
       align-items: center;
       display: flex;
@@ -224,6 +231,7 @@
 <body>
   <header>
     <h1>Bildbanken</h1>
+    <p class="current-catalog" id="current-catalog">Home</p>
     <div class="tools">
       <input id="search" type="search" placeholder="Sök på katalog eller filnamn" autocomplete="off">
       <span class="count" id="count"></span>
@@ -274,6 +282,7 @@
     const grid = document.querySelector("#grid");
     const loadMore = document.querySelector("#load-more");
     const catalogs = document.querySelector("#catalogs");
+    const currentCatalog = document.querySelector("#current-catalog");
     const search = document.querySelector("#search");
     const count = document.querySelector("#count");
     const empty = document.querySelector("#empty");
@@ -378,11 +387,16 @@
       state.visiblePhotos = matches;
       state.renderedCount = 0;
 
-      renderCatalogs();
-      grid.replaceChildren();
+      replaceElementChildren(grid);
+      try {
+        renderCatalogs();
+      } catch (error) {
+        console.warn("Kunde inte rendera katalogknappar", error);
+      }
+      currentCatalog.textContent = currentCatalogName();
+      empty.hidden = matches.length > 0;
+      count.textContent = query ? `${matches.length} av ${photos.length}` : `${matches.length} bilder`;
       renderNextPhotos();
-      empty.hidden = state.visiblePhotos.length > 0;
-      count.textContent = query ? `${state.visiblePhotos.length} av ${photos.length}` : `${state.visiblePhotos.length} bilder`;
       updateLoadMoreVisibility();
     }
 
@@ -414,9 +428,13 @@
 
       const fragment = document.createDocumentFragment();
       for (const photo of nextPhotos) {
-        fragment.append(renderPhoto(photo));
+        try {
+          fragment.appendChild(renderPhoto(photo));
+        } catch (error) {
+          console.warn("Kunde inte rendera bild", photo, error);
+        }
       }
-      grid.append(fragment);
+      grid.appendChild(fragment);
       state.renderedCount += nextPhotos.length;
       updateLoadMoreVisibility();
     }
@@ -436,13 +454,20 @@
 
       for (const name of childCatalogNames(currentCatalogNode())) {
         const childPath = [...state.currentPath, name];
-        buttons.push(catalogButton(`${displayName(name)} (${photoCountInCatalog(childPath)})`, () => {
+        const photoCount = photoCountInCatalog(childPath);
+        if (photoCount === 0) continue;
+        buttons.push(catalogButton(`${displayName(name)} (${photoCount})`, () => {
           state.currentPath = [...state.currentPath, name];
           render();
         }));
       }
 
-      catalogs.replaceChildren(...buttons);
+      replaceElementChildren(catalogs, buttons);
+    }
+
+    function currentCatalogName() {
+      if (state.currentPath.length === 0) return "Home";
+      return displayName(state.currentPath[state.currentPath.length - 1]);
     }
 
     function catalogButton(label, onClick, className = "") {
@@ -457,7 +482,7 @@
     function currentCatalogNode() {
       let node = state.tree;
       for (const part of state.currentPath) {
-        node = node?.[part];
+        node = node && node[part];
       }
       return node || {};
     }
@@ -477,7 +502,8 @@
     function photoCountInCatalog(path) {
       const terms = normalize(search.value).split(/\s+/).filter(Boolean);
       const photos = state.photos.filter((photo) => pathStartsWith(photo.catalogPath, path));
-      return rankMatches(photos, terms).length;
+      if (terms.length === 0) return photos.length;
+      return photos.filter((photo) => matchRank(photo, terms) !== null).length;
     }
 
     function pathStartsWith(path, prefix) {
@@ -499,12 +525,28 @@
       name.textContent = photo.displayName;
 
       meta.className = "meta";
-      renderPhotoMeta(meta, photo);
+      try {
+        renderPhotoMeta(meta, photo);
+      } catch (error) {
+        console.warn("Kunde inte rendera bildtext", photo, error);
+        meta.textContent = photographerTimestampText(photo);
+      }
 
-      caption.append(name, meta);
-      figure.append(image, caption);
+      caption.appendChild(name);
+      caption.appendChild(meta);
+      figure.appendChild(image);
+      figure.appendChild(caption);
       figure.addEventListener("click", () => openPhoto(photo));
       return figure;
+    }
+
+    function replaceElementChildren(element, children = []) {
+      element.textContent = "";
+      const fragment = document.createDocumentFragment();
+      for (const child of children) {
+        fragment.appendChild(child);
+      }
+      element.appendChild(fragment);
     }
 
     function rankMatches(photos, terms) {
@@ -791,7 +833,8 @@
     }
 
     function photographerName(key) {
-      return state.photographers[key]?.[0] || key;
+      const photographer = state.photographers[key];
+      return photographer ? photographer[0] : key;
     }
 
     function photoValue(value) {
@@ -823,7 +866,7 @@
     }
 
     function renderPhotoMeta(container, photo, exif = "") {
-      container.replaceChildren();
+      container.textContent = "";
       const entries = photo.folders.map((folder, index) => ({
         text: photo.displayFolders[index],
         source: folder,
@@ -835,15 +878,15 @@
       for (const entry of entries.filter((item) => item.text)) {
         if (container.childNodes.length > 0) {
           if (entry.lineBreakBefore) {
-            container.append(document.createElement("br"));
+            container.appendChild(document.createElement("br"));
           } else {
-            container.append(document.createTextNode(" • "));
+            container.appendChild(document.createTextNode(" • "));
           }
         }
         if (entry.linkTournaments) {
           appendTextWithTournamentLinks(container, entry.text, entry.source);
         } else {
-          container.append(document.createTextNode(entry.text));
+          container.appendChild(document.createTextNode(entry.text));
         }
       }
     }
@@ -857,34 +900,37 @@
     function appendTextWithTournamentLinks(container, text, source) {
       const tournamentPattern = /T(\d{5})/g;
       let start = 0;
-      for (const match of source.matchAll(tournamentPattern)) {
+      let match = tournamentPattern.exec(source);
+      while (match) {
         const code = match[0];
         const id = match[1];
         const displayIndex = text.indexOf(code, start);
-        if (displayIndex === -1) continue;
-        if (displayIndex > start) {
-          container.append(document.createTextNode(text.slice(start, displayIndex)));
+        if (displayIndex !== -1) {
+          if (displayIndex > start) {
+            container.appendChild(document.createTextNode(text.slice(start, displayIndex)));
+          }
+          const link = document.createElement("a");
+          link.href = `https://member.schack.se/ShowTournamentServlet?id=${encodeURIComponent(id)}&listingtype=2`;
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = "Resultat";
+          link.addEventListener("click", (event) => event.stopPropagation());
+          container.appendChild(link);
+          start = displayIndex + code.length;
         }
-        const link = document.createElement("a");
-        link.href = `https://member.schack.se/ShowTournamentServlet?id=${encodeURIComponent(id)}&listingtype=2`;
-        link.target = "_blank";
-        link.rel = "noopener";
-        link.textContent = "Resultat";
-        link.addEventListener("click", (event) => event.stopPropagation());
-        container.append(link);
-        start = displayIndex + code.length;
+        match = tournamentPattern.exec(source);
       }
       if (start < text.length) {
-        container.append(document.createTextNode(text.slice(start)));
+        container.appendChild(document.createTextNode(text.slice(start)));
       }
     }
 
     function displayName(value) {
       return String(value)
-        .replaceAll("_", " ")
-        .replaceAll("/", " • ")
-        .replaceAll("|", " • ")
-        .replaceAll("Vy-", "")
+        .replace(/_/g, " ")
+        .replace(/\//g, " • ")
+        .replace(/\|/g, " • ")
+        .replace(/Vy-/g, "")
         .replace(/60plus/gi, "60+")
         .replace(/\s+16x9\s+/gi, " ")
         .replace(/\.jpg$/i, "")
