@@ -70,6 +70,8 @@ Förklaring:
 
 # index.html
 
+Lägg in en `Try it!` länk i readme.md
+
 Starta inte någon web server, jag använder Go Live!
 
 ## Input 
