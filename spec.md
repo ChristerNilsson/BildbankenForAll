@@ -54,24 +54,23 @@ https://drive.google.com/drive/folders/1IQSQUGml83eFJQAxqi_ymg1UXhtqSv4K?usp=sha
 
 # photos.json:
 
-Behöver kataloger och filnamn visas i klartext eller räcker det med B8KCKkfXjk ?
-
 Denna fil underhålls av update.py
 
 { 
 	"2025": {
 		"2025-09-21 Knatte-Lag-DM Stockholm_I10748_T16960": {
-			"Knattelag-DM_01.Wasa_SK_2025-09-21.jpg":["B8KCGMzp4X","LOAH"],
-			"Knattelag-DM_01.Wasa_SK_med_samtliga_lagtränare_2025-09-21.jpg":["B8KGJDuLbi","LOAH"],
-			"Knattelag-DM_03_Wasa_SK_II_2025-09-21.jpg":["B8KCKkfXjk","CN"]
+			"Knattelag-DM_01.Wasa_SK_2025-09-21.jpg":                        ["1u_AMCbDDgpBuUKPFiR-lB0IYuEJbrWzS","LOAH", 1234567891],
+			"Knattelag-DM_01.Wasa_SK_med_samtliga_lagtränare_2025-09-21.jpg":["1u_AMCbDDgpBuUKPFiR-lB0IYuEJbrWzT","LOAH", 1234567892],
+			"Knattelag-DM_03_Wasa_SK_II_2025-09-21.jpg":                     ["1u_AMCbDDgpBuUKPFiR-lB0IYuEJbrWzU","CN",   1234567893]
 			}
 		}	
 }
 
 Förklaring:
 
-* B8KCGMzp4X = Bildfilens nyckel
+* 1u_AMCbDDgpBuUKPFiR-lB0IYuEJbrWzS = Bildfilens nyckel
 * LOAH = Fotografens nyckel
+* 1234567891 = sekunder sedan 1900-01-01 00:00:00. Dvs EXIF-tiden för bildens tagande.
 
 # index.html
 
@@ -81,6 +80,35 @@ Starta inte någon web server, jag använder Go Live!
 
 * photographers.json
 * photos.json
+
+## Visning
+
+I katalognamn och filnamn ska följande tecken bytas ut (enbart vid visning):
+
+|Från|Till|
+|-|-|
+|_|mellanslag|
+|Vy-||
+|.jpg||
+|60plus|60+|
+| 16x9 |mellanslag|
+
+Avgränsarna / samt | ska ersättas med •
+
+Om strängen `T18469` finns i katalognamnet ska den bytas mot en länk:
+`https://member.schack.se/ShowTournamentServlet?id=18469&listingtype=2`
+Det gäller strängen T följd av fem siffror. Texten ska vara `Resultat`
+
+Bilderna ska visas i fallande tidsordning (EXIT-timestamp då bilden togs)
+
+Bildtexten ska även visa EXIF-timestamp på formatet YYYY-MM-DD HH:MM:SS
+
+Exempel på den undre bildtexten:
+```
+2022-07-02 Schack-SM Uppsala • Sverigemästarklassen, 2022
+CN @ 2022-07-10 15:58
+```
+Fotograf och timestamp ligger på en egen rad.
 
 ## Sökning
 
@@ -94,11 +122,11 @@ Sökning ska kunna ske på flera termer. Om två termer, A och B, används ska r
 
 ## Helskärmsläge
 
-Då man klickar på en bild ska den visas på hela skärmen med en länk med följande utseende:
-Exempel: https://drive.google.com/file/d/1_eXXpVdeaxtgSX9wJX5ftuim4Hmm7G-g/view?usp=drive_link
-Man ska bara behöva klicka en gång, inte två via en "Öppna" knapp.
+Då man klickar på en bild ska den direkt gå till Googles visningsprogram.
+Typ: https://drive.google.com/drive/home?dmr=1&ec=wgc-drive-%5Bmodule%5D-goto
+Finns ingen anledning att klicka två gånger.
 
-## Skapa README_admin.md
+# Skapa README_admin.md
 
 * Denna förklarar hur producers läggs upp, dvs fotografer.
 ```
@@ -106,7 +134,7 @@ Man ska bara behöva klicka en gång, inte två via en "Öppna" knapp.
 ```
 * Var man hittar filen, hur den hamnar på github.
 
-## Skapa README_producer.md
+# Skapa README_producer.md
 
 * Denna förklarar vad en fotograf behöver veta.
 * Introduktion till Google Drive.
@@ -117,7 +145,7 @@ Man ska bara behöva klicka en gång, inte två via en "Öppna" knapp.
 	* underscore används oftast för att binda ihop förnamn och efternamn. T ex Bo_Ek
 		* Då kan man söka på Bo_Ek och slipper falska träffar som Bo Björk
 
-## Skapa README_consumer.md
+# Skapa README_consumer.md
 
 * Denna förklarar vad en användare behöver veta.
 * Hur man söker

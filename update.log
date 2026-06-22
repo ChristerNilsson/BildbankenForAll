@@ -219,3 +219,28 @@
 2026-06-20T18:22:13   Skapade LOAH.changes.json.
 2026-06-20T18:22:13  Skapade photos.json med 2311 bilder.
 2026-06-20T18:22:13 Uppdatering klar.
+
+2026-06-22T16:26:54 Startar uppdatering.
+2026-06-22T16:26:55 Skapade token.json.
+2026-06-22T16:26:55  OAuth används för Drive API och ändringskontroll.
+2026-06-22T16:26:55  Hämtar CN.
+2026-06-22T16:27:16   Skapade CN.json med 1535 bilder.
+2026-06-22T16:27:16   Skapade CN.manifest.json med 1594 poster.
+2026-06-22T16:27:16   Skapade CN.changes.json.
+2026-06-22T16:27:16  Hämtar LOAH.
+2026-06-22T16:27:34   Skapade LOAH.json med 776 bilder.
+2026-06-22T16:27:34   Skapade LOAH.manifest.json med 815 poster.
+2026-06-22T16:27:34   Skapade LOAH.changes.json.
+2026-06-22T16:27:34  Skapade photos.json med 2311 bilder.
+2026-06-22T16:27:34 Uppdatering klar.
+
+2026-06-22T16:42:18 Startar uppdatering.
+2026-06-22T16:42:18  OAuth används för Drive API och ändringskontroll.
+2026-06-22T16:42:18  Hämtar CN.
+2026-06-22T16:42:38   Inget nytt för CN. CN.json lämnas oförändrad.
+2026-06-22T16:42:39   Skapade CN.changes.json.
+2026-06-22T16:42:39  Hämtar LOAH.
+2026-06-22T16:42:39   Inga Drive-ändringar för LOAH. LOAH.json lämnas oförändrad.
+2026-06-22T16:42:39   Skapade LOAH.changes.json.
+2026-06-22T16:42:39  Skapade photos.json med 2311 bilder.
+2026-06-22T16:42:39 Uppdatering klar.

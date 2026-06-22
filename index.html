@@ -102,6 +102,10 @@
       overflow-wrap: anywhere;
     }
 
+    .meta a {
+      color: inherit;
+    }
+
     .empty {
       color: #536160;
       font-size: 1.1rem;
@@ -178,6 +182,10 @@
       overflow-wrap: anywhere;
       padding: 12px clamp(12px, 3vw, 28px);
     }
+
+    .viewer-meta a {
+      color: #ffffff;
+    }
   </style>
 </head>
 <body>
@@ -243,7 +251,7 @@
         fetchJson("photos.json", {})
       ]);
       state.photographers = photographers;
-      state.photos = flattenPhotos(tree).sort((a, b) => b.date.localeCompare(a.date));
+      state.photos = flattenPhotos(tree).sort(compareFreshness);
       search.value = queryFromUrl();
       search.addEventListener("input", () => {
         updateQueryUrl(search.value);
@@ -287,15 +295,20 @@
       function walk(node, path) {
         for (const [name, value] of Object.entries(node || {})) {
           if (Array.isArray(value)) {
-            const [key, photographerKey] = value.length === 2 ? value : [value[2], value[3]];
+            const [key, photographerKey, timestamp] = photoValue(value);
             const folders = path.slice(1);
+            const displayFolders = folders.map(displayName);
+            const displayPhotoName = displayName(name);
             photos.push({
               name,
+              displayName: displayPhotoName,
               key,
               photographerKey,
               folders,
+              displayFolders,
               date: findDate([...path, name]),
-              haystack: [...folders, name].join(" ").toLowerCase()
+              timestamp,
+              haystack: [...folders, name, ...displayFolders, displayPhotoName].join(" ").toLowerCase()
             });
           } else {
             walk(value, [...path, name]);
@@ -332,17 +345,14 @@
       const meta = document.createElement("div");
 
       image.src = imageUrl(photo);
-      image.alt = photo.name;
+      image.alt = photo.displayName;
       image.loading = "lazy";
 
       name.className = "name";
-      name.textContent = photo.name;
+      name.textContent = photo.displayName;
 
       meta.className = "meta";
-      meta.textContent = [
-        photo.folders.join(" / "),
-        photographerName(photo.photographerKey)
-      ].filter(Boolean).join(" | ");
+      renderPhotoMeta(meta, photo);
 
       caption.append(name, meta);
       figure.append(image, caption);
@@ -356,7 +366,7 @@
       return photos
         .map((photo) => ({ photo, rank: matchRank(photo, terms) }))
         .filter((entry) => entry.rank !== null)
-        .sort((a, b) => compareRanks(a.rank, b.rank) || b.photo.date.localeCompare(a.photo.date))
+        .sort((a, b) => compareRanks(a.rank, b.rank) || compareFreshness(a.photo, b.photo))
         .map((entry) => entry.photo);
     }
 
@@ -398,9 +408,9 @@
     }
 
     function openPhoto(photo) {
-      const fileUrl = driveFileUrl(photo);
-      if (fileUrl) {
-        window.open(fileUrl, "_blank", "noopener");
+      const viewerUrl = driveViewerUrl(photo);
+      if (viewerUrl) {
+        window.location.href = viewerUrl;
         return;
       }
       openViewer(photo);
@@ -409,8 +419,8 @@
     function openViewer(photo) {
       state.viewer.photo = photo;
       viewerImage.src = imageUrl(photo, 2400);
-      viewerImage.alt = photo.name;
-      viewerTitle.textContent = photo.name;
+      viewerImage.alt = photo.displayName;
+      viewerTitle.textContent = photo.displayName;
       setViewerMeta(photo);
       viewer.showModal();
       readExif(photo);
@@ -424,11 +434,7 @@
     }
 
     function setViewerMeta(photo, exif = "") {
-      viewerMeta.textContent = [
-        photo.folders.join(" / "),
-        photographerName(photo.photographerKey),
-        exif
-      ].filter(Boolean).join(" | ");
+      renderPhotoMeta(viewerMeta, photo, exif);
     }
 
     function resetViewerTransform() {
@@ -509,7 +515,7 @@
         if (!response.ok) return;
         const tags = parseExif(await response.arrayBuffer());
         if (state.viewer.photo === photo && tags.length > 0) {
-          setViewerMeta(photo, tags.join(" | "));
+          setViewerMeta(photo, tags.join(" • "));
         }
       } catch (error) {
         console.warn("Kunde inte läsa EXIF", error);
@@ -641,6 +647,104 @@
       return state.photographers[key]?.[0] || key;
     }
 
+    function photoValue(value) {
+      if (value.length >= 2 && typeof value[0] === "string") {
+        return [value[0], value[1], Number(value[2]) || 0];
+      }
+      return [value[2], value[3], Number(value[4]) || 0];
+    }
+
+    function compareFreshness(left, right) {
+      return right.timestamp - left.timestamp || right.date.localeCompare(left.date);
+    }
+
+    function formatTimestamp(secondsSince1900) {
+      const unixMilliseconds = (secondsSince1900 - 2208988800) * 1000;
+      const date = new Date(unixMilliseconds);
+      if (Number.isNaN(date.getTime())) return "";
+      const year = date.getUTCFullYear();
+      const month = pad2(date.getUTCMonth() + 1);
+      const day = pad2(date.getUTCDate());
+      const hours = pad2(date.getUTCHours());
+      const minutes = pad2(date.getUTCMinutes());
+      const seconds = pad2(date.getUTCSeconds());
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    function pad2(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function renderPhotoMeta(container, photo, exif = "") {
+      container.replaceChildren();
+      const entries = photo.folders.map((folder, index) => ({
+        text: photo.displayFolders[index],
+        source: folder,
+        linkTournaments: true
+      }));
+      entries.push({ text: photographerTimestampText(photo), lineBreakBefore: true });
+      if (exif) entries.push({ text: exif });
+
+      for (const entry of entries.filter((item) => item.text)) {
+        if (container.childNodes.length > 0) {
+          if (entry.lineBreakBefore) {
+            container.append(document.createElement("br"));
+          } else {
+            container.append(document.createTextNode(" • "));
+          }
+        }
+        if (entry.linkTournaments) {
+          appendTextWithTournamentLinks(container, entry.text, entry.source);
+        } else {
+          container.append(document.createTextNode(entry.text));
+        }
+      }
+    }
+
+    function photographerTimestampText(photo) {
+      const photographer = photo.photographerKey || photographerName(photo.photographerKey);
+      if (!photo.timestamp) return photographer;
+      return `${photographer} @ ${formatTimestamp(photo.timestamp)}`;
+    }
+
+    function appendTextWithTournamentLinks(container, text, source) {
+      const tournamentPattern = /T(\d{5})/g;
+      let start = 0;
+      for (const match of source.matchAll(tournamentPattern)) {
+        const code = match[0];
+        const id = match[1];
+        const displayIndex = text.indexOf(code, start);
+        if (displayIndex === -1) continue;
+        if (displayIndex > start) {
+          container.append(document.createTextNode(text.slice(start, displayIndex)));
+        }
+        const link = document.createElement("a");
+        link.href = `https://member.schack.se/ShowTournamentServlet?id=${encodeURIComponent(id)}&listingtype=2`;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.textContent = "Resultat";
+        link.addEventListener("click", (event) => event.stopPropagation());
+        container.append(link);
+        start = displayIndex + code.length;
+      }
+      if (start < text.length) {
+        container.append(document.createTextNode(text.slice(start)));
+      }
+    }
+
+    function displayName(value) {
+      return String(value)
+        .replaceAll("_", " ")
+        .replaceAll("/", "•")
+        .replaceAll("|", "•")
+        .replaceAll("Vy-", "")
+        .replace(/60plus/gi, "60+")
+        .replace(/\s+16x9\s+/gi, " ")
+        .replace(/\.jpg$/i, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
     function imageUrl(photo, size = 1200) {
       if (/^https?:\/\//.test(photo.key)) return photo.key;
       if (/^[A-Za-z0-9_-]{10,}$/.test(photo.key)) {
@@ -649,12 +753,13 @@
       return encodeURI(photo.key);
     }
 
-    function driveFileUrl(photo) {
+    function driveViewerUrl(photo) {
       if (/^[A-Za-z0-9_-]{10,}$/.test(photo.key)) {
         return `https://drive.google.com/file/d/${encodeURIComponent(photo.key)}/view?usp=drive_link`;
       }
       return "";
     }
+
   </script>
 </body>
 </html>

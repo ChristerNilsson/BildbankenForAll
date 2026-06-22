@@ -6,7 +6,7 @@ import json
 import os
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -44,6 +44,7 @@ class DriveItem:
     name: str
     mime_type: str
     modified_time: str = ""
+    taken_time: int = 0
 
     @property
     def is_folder(self) -> bool:
@@ -101,7 +102,7 @@ def main() -> None:
                 continue
 
         photographer_photos: dict[str, Any] = {}
-        manifest_entries: list[dict[str, str]] = []
+        manifest_entries: list[dict[str, Any]] = []
 
         add_drive_folder(photographer_photos, photographer_key, folder_id, [], manifest_entries)
         manifest = build_manifest(folder_id, manifest_entries)
@@ -299,7 +300,7 @@ def add_drive_folder(
     photographer_key: str,
     folder_id: str,
     path: list[str],
-    manifest_entries: list[dict[str, str]],
+    manifest_entries: list[dict[str, Any]],
     visited: set[str] | None = None,
 ) -> int:
     if visited is None:
@@ -322,13 +323,14 @@ def add_drive_folder(
                 "name": item.name,
                 "mimeType": item.mime_type,
                 "modifiedTime": item.modified_time,
+                "takenTime": item.taken_time,
                 "path": "/".join([*path, item.name]),
             }
         )
         if item.is_folder:
             changed += add_drive_folder(photos, photographer_key, item.id, [*path, item.name], manifest_entries, visited)
         elif item.is_image:
-            insert_photo(photos, path, item.name, [item.id, photographer_key])
+            insert_photo(photos, path, item.name, [item.id, photographer_key, item.taken_time])
             changed += 1
     return changed
 
@@ -367,7 +369,7 @@ def list_drive_folder_api(folder_id: str) -> list[DriveItem]:
     while True:
         query = {
             "q": f"'{folder_id}' in parents and trashed = false",
-            "fields": "nextPageToken,files(id,name,mimeType,modifiedTime)",
+            "fields": "nextPageToken,files(id,name,mimeType,modifiedTime,imageMediaMetadata(time))",
             "pageSize": "1000",
             "supportsAllDrives": "true",
             "includeItemsFromAllDrives": "true",
@@ -384,7 +386,10 @@ def list_drive_folder_api(folder_id: str) -> list[DriveItem]:
             name = repair_text(entry.get("name", ""))
             mime_type = entry.get("mimeType", "")
             if item_id and name and mime_type:
-                items.append(DriveItem(item_id, name, mime_type, entry.get("modifiedTime", "")))
+                image_time = (entry.get("imageMediaMetadata") or {}).get("time", "")
+                modified_time = entry.get("modifiedTime", "")
+                taken_time = timestamp_seconds_since_1900(image_time) or timestamp_seconds_since_1900(modified_time)
+                items.append(DriveItem(item_id, name, mime_type, modified_time, taken_time))
 
         page_token = data.get("nextPageToken", "")
         if not page_token:
@@ -428,7 +433,7 @@ def request(url: str) -> Request:
     return Request(url, headers={"User-Agent": USER_AGENT})
 
 
-def build_manifest(folder_id: str, entries: list[dict[str, str]]) -> dict[str, Any]:
+def build_manifest(folder_id: str, entries: list[dict[str, Any]]) -> dict[str, Any]:
     sorted_entries = sorted(entries, key=lambda entry: (entry["path"], entry["id"]))
     encoded = json.dumps(sorted_entries, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return {
@@ -536,6 +541,34 @@ def repair_text(value: str) -> str:
         return value.encode("latin1").decode("utf-8")
     except UnicodeError:
         return value
+
+
+def timestamp_seconds_since_1900(value: str) -> int:
+    if not value:
+        return 0
+
+    parsed: datetime | None = None
+    normalized = value.strip()
+    if normalized.endswith("Z"):
+        normalized = normalized[:-1] + "+00:00"
+
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError:
+        for pattern in ("%Y:%m:%d %H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+            try:
+                parsed = datetime.strptime(value.strip(), pattern)
+                break
+            except ValueError:
+                pass
+
+    if parsed is None:
+        return 0
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+
+    epoch = datetime(1900, 1, 1, tzinfo=timezone.utc)
+    return round((parsed.astimezone(timezone.utc) - epoch).total_seconds())
 
 
 def insert_photo(photos: dict[str, Any], path: list[str], filename: str, value: list[Any]) -> None:
