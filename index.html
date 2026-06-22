@@ -446,7 +446,7 @@
     function renderCatalogs() {
       const buttons = [];
       if (state.currentPath.length > 0) {
-        buttons.push(catalogButton("Up", () => {
+        buttons.push(catalogButton("Upp", () => {
           state.currentPath = state.currentPath.slice(0, -1);
           render();
         }, "up"));

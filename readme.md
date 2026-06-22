@@ -1,12 +1,14 @@
 # TODO
 
+[Try it!](https://christernilsson.github.io/BildbankenForAll/)
+
 ### HIGH ##################
 
 ## GUI Katalogknappar
 
 * Typ 2026, turneringskataloger samt grupper.
 * Visa antalet träffar i katalogerna med ().
-* Up för att komma tillbaka. 
+* Upp för att komma tillbaka.
 
 ## PYTHON Automatisk exekvering av update.py
 
