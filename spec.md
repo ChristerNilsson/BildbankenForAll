@@ -81,11 +81,14 @@ Starta inte någon web server, jag använder Go Live!
 
 ## Visning
 
+Tag bort rubriken Bildbanken högst upp. Istället för Home ska Bildbanken visas.
+
+Sökrutan ska stå högst upp på sidan.
+
 Öka minimum-bredden till 270px.
 
-Problemet jag trodde fanns i index.html, beror troligen på att Google Drive inte levererade bilder.
-
-Visa namnet på aktuell katalog eller Home. Direkt till höger om denna ska antalet bilder visas som (123)
+Visa namnet på aktuell katalog eller Bildbanken. Direkt till höger om denna ska antalet bilder visas som (123).
+Detta antal ska räknas om med varje tangenttryckning i sökrutan
 Antalet bilder till höger om sökrutan ska bort.
 Visa inte katalogknappar med (0) bilder.  
 Om det finns underkataloger till en turnering ska dessa räknas rekursivt.  
@@ -139,6 +142,7 @@ Fotografen kan ha olika key.
 ## Sökning
 
 Då man ändrar i queryfältet ska urlen uppdateras. Den ska även läsa in det som står där initialt.
+Aktuell folder ska visas i urlen.
 
 Programmet ska ha sökmöjligheter på katalognamn och bildfilsnamn.  
 Färskaste bilden ska visas först.  

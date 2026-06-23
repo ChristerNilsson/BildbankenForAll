@@ -21,7 +21,7 @@ Bilder läses in efter hand när du scrollar.
 
 Katalogknapparna visar katalogerna på aktuell nivå. Siffran inom parentes visar hur många bilder som finns i katalogen. Klicka på en katalog för att gå ner i den. Använd `Upp` för att gå tillbaka till föräldrakatalogen.
 
-Aktuell katalog visas ovanför sökfältet, med antal bilder direkt till höger om katalognamnet, till exempel `(123)`.
+Sökfältet visas högst upp. Aktuell katalog visas under sökfältet, med antal matchande bilder direkt till höger om katalognamnet, till exempel `Bildbanken (123)`. Antalet räknas om när du skriver i sökfältet.
 
 Sökning och bildlistan gäller inom den aktuella katalogen.
 
@@ -30,12 +30,12 @@ Bildtexten visar kataloger på första raden och fotografnyckel samt EXIF-tid p�
 
 ## URL
 
-Sökningen sparas i URL:en. Det betyder att du kan kopiera länken och skicka samma sökning till någon annan.
+Sökningen och aktuell katalog sparas i URL:en. Det betyder att du kan kopiera länken och skicka samma vy till någon annan.
 
 Exempel:
 
 ```text
-http://127.0.0.1:5500/index.html?q=wasa%20klass
+http://127.0.0.1:5500/index.html?q=wasa%20klass&folder=2026/2026-05-20%20Stockholmsm%C3%A4sterskap%2060plus%20snabb
 ```
 
 ## Öppna bild

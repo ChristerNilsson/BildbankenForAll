@@ -29,16 +29,11 @@
       z-index: 2;
     }
 
-    h1 {
-      font-size: clamp(1.7rem, 3vw, 2.4rem);
-      line-height: 1.1;
-      margin: 0 0 16px;
-    }
-
     .tools {
       align-items: center;
       display: flex;
       gap: 12px;
+      margin-bottom: 12px;
       max-width: 860px;
     }
 
@@ -248,13 +243,12 @@
 </head>
 <body>
   <header>
-    <h1>Bildbanken</h1>
-    <div class="current-catalog">
-      <span id="current-catalog">Home</span>
-      <span class="current-catalog-count" id="current-catalog-count"></span>
-    </div>
     <div class="tools">
       <input id="search" type="search" placeholder="Sök på katalog eller filnamn" autocomplete="off">
+    </div>
+    <div class="current-catalog">
+      <span id="current-catalog">Bildbanken</span>
+      <span class="current-catalog-count" id="current-catalog-count"></span>
     </div>
     <div class="catalogs" id="catalogs"></div>
     <div class="catalog-links" id="catalog-links"></div>
@@ -329,9 +323,10 @@
       state.photographers = photographers;
       state.tree = tree;
       state.photos = flattenPhotos(tree).sort(compareFreshness);
+      state.currentPath = folderPathFromUrl(tree);
       search.value = queryFromUrl();
       search.addEventListener("input", () => {
-        updateQueryUrl(search.value);
+        updateUrl(search.value);
         render();
       });
       viewerClose.addEventListener("click", closeViewer);
@@ -425,7 +420,7 @@
       }
       renderCatalogLinks();
       currentCatalog.textContent = currentCatalogName();
-      currentCatalogCount.textContent = `(${photos.length})`;
+      currentCatalogCount.textContent = `(${matches.length})`;
       empty.hidden = matches.length > 0;
       renderNextPhotos();
       updateLoadMoreVisibility();
@@ -481,6 +476,7 @@
       if (state.currentPath.length > 0) {
         buttons.push(catalogButton("Upp", () => {
           state.currentPath = state.currentPath.slice(0, -1);
+          updateUrl(search.value);
           render();
         }, "up"));
       }
@@ -491,6 +487,7 @@
         if (photoCount === 0) continue;
         buttons.push(catalogButton(`${displayCatalogButtonName(name)} (${photoCount})`, () => {
           state.currentPath = [...state.currentPath, name];
+          updateUrl(search.value);
           render();
         }));
       }
@@ -504,7 +501,7 @@
     }
 
     function currentCatalogName() {
-      if (state.currentPath.length === 0) return "Home";
+      if (state.currentPath.length === 0) return "Bildbanken";
       return displayName(state.currentPath[state.currentPath.length - 1]);
     }
 
@@ -783,7 +780,25 @@
       return params.get("q") || params.get("query") || "";
     }
 
-    function updateQueryUrl(value) {
+    function folderPathFromUrl(tree) {
+      const folder = folderValueFromUrl();
+      const path = folder
+        .split("/")
+        .filter(Boolean)
+        .map((part) => decodeURIComponent(part));
+      let node = tree;
+      const validPath = [];
+      for (const part of path) {
+        if (!node || !Object.prototype.hasOwnProperty.call(node, part) || Array.isArray(node[part])) {
+          return [];
+        }
+        validPath.push(part);
+        node = node[part];
+      }
+      return validPath;
+    }
+
+    function updateUrl(value) {
       const params = new URLSearchParams(window.location.search);
       const query = value.trim();
       if (query) {
@@ -792,8 +807,30 @@
         params.delete("q");
         params.delete("query");
       }
-      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
+      params.delete("folder");
+      const queryParams = params.toString();
+      const folderParam = folderValueFromPath();
+      const nextQuery = [queryParams, folderParam].filter(Boolean).join("&");
+      const next = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}${window.location.hash}`;
       window.history.replaceState(null, "", next);
+    }
+
+    function folderValueFromUrl() {
+      const query = window.location.search.replace(/^\?/, "");
+      for (const part of query.split("&")) {
+        const [key, value = ""] = part.split("=");
+        if (decodeURIComponent(key.replace(/\+/g, " ")) === "folder") {
+          return value.replace(/\+/g, " ");
+        }
+      }
+      return "";
+    }
+
+    function folderValueFromPath() {
+      if (state.currentPath.length > 0) {
+        return `folder=${state.currentPath.map((part) => encodeURIComponent(part)).join("/")}`;
+      }
+      return "";
     }
 
     function openPhoto(photo) {
