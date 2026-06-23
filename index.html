@@ -1146,8 +1146,6 @@
       const type = code[0];
       const id = code.slice(1);
       link.href = codeUrl(type, id);
-      link.target = "_blank";
-      link.rel = "noopener";
       link.textContent = codeLabel(type);
       return link;
     }
@@ -1161,8 +1159,6 @@
     function pdfLink(name, fileId) {
       const link = document.createElement("a");
       link.href = driveFileUrl(fileId);
-      link.target = "_blank";
-      link.rel = "noopener";
       link.textContent = displayPdfName(name);
       return link;
     }
