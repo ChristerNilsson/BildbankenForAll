@@ -18,7 +18,7 @@ photos.json ska innehålla ett katalogträd där löven utgörs av länkar till 
 
 photographers.json innehåller registrerade fotografer samt url till deras bilder.
 
-För att få bättre prestanda, ska varje fotograf ska sparas i en egen json-fil. T ex CN.json.
+För att få bättre prestanda, ska varje fotograf ska sparas i en egen json-fil. T ex CN21.json.
 
 Denna json-fil ska sparas i katalogen photographers
 
@@ -31,8 +31,8 @@ Vill se lite indenteringar i logfilen:
 ```
 2026-06-20T18:06:00 Startar uppdatering.
 2026-06-20T18:06:00  OAuth används för Drive API och ändringskontroll.
-2026-06-20T18:06:00  Hämtar CN.
-2026-06-20T18:06:00   Inga Drive-ändringar för CN. CN.json lämnas oförändrad.
+2026-06-20T18:06:00  Hämtar CN21.
+2026-06-20T18:06:00   Inga Drive-ändringar för CN21. CN21.json lämnas oförändrad.
 2026-06-20T18:06:00  Hämtar LOAH.
 2026-06-20T18:06:01   Inga Drive-ändringar för LOAH. LOAH.json lämnas oförändrad.
 2026-06-20T18:06:01  Skapade photos.json med 2311 bilder.
@@ -43,7 +43,7 @@ Vill se lite indenteringar i logfilen:
 Denna fil uppdateras manuellt.
 
 {
-	"CN": ["Christer Nilsson", "https://drive.google.com/drive/folders/1IQSQUGml83eFJQAxqi_ymg1UXhtqSv4K?usp=sharing"]
+	"CN21": ["Christer Nilsson", "https://drive.google.com/drive/folders/1IQSQUGml83eFJQAxqi_ymg1UXhtqSv4K?usp=sharing"]
 }
 
 https://drive.google.com/drive/folders/1IQSQUGml83eFJQAxqi_ymg1UXhtqSv4K?usp=sharing pekar på denna dators drive-katalog där bilderna ligger.
@@ -57,7 +57,7 @@ Denna fil underhålls av update.py
 		"2025-09-21 Knatte-Lag-DM Stockholm_I10748_T16960": {
 			"Knattelag-DM_01.Wasa_SK_2025-09-21.jpg":                        ["1u_AMCbDDgpBuUKPFiR-lB0IYuEJbrWzS","LOAH", 1234567891],
 			"Knattelag-DM_01.Wasa_SK_med_samtliga_lagtränare_2025-09-21.jpg":["1u_AMCbDDgpBuUKPFiR-lB0IYuEJbrWzT","LOAH", 1234567892],
-			"Knattelag-DM_03_Wasa_SK_II_2025-09-21.jpg":                     ["1u_AMCbDDgpBuUKPFiR-lB0IYuEJbrWzU","CN",   1234567893]
+			"Knattelag-DM_03_Wasa_SK_II_2025-09-21.jpg":                     ["1u_AMCbDDgpBuUKPFiR-lB0IYuEJbrWzU","CN21", 1234567893]
 			}
 		}	
 }
@@ -121,9 +121,10 @@ Bildtexten ska även visa EXIF-timestamp på formatet YYYY-MM-DD HH:MM:SS
 Exempel på den undre bildtexten:
 ```
 2022-07-02 Schack-SM Uppsala • Sverigemästarklassen, 2022
-CN @ 2022-07-10 15:58
+LOAH @ 2022-07-10 15:58
 ```
 Fotograf och timestamp ligger på en egen rad.
+Fotografen kan ha olika key.
 
 ## Sökning
 

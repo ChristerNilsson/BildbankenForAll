@@ -24,7 +24,7 @@ Katalogknapparna visar katalogerna på aktuell nivå. Siffran inom parentes visa
 Sökning och bildlistan gäller inom den aktuella katalogen.
 
 Turneringskoder i katalognamn visas som länken `Resultat`, till exempel för `T18469`.
-Bildtexten visar kataloger på första raden och fotografnyckel samt EXIF-tid på egen rad, till exempel `CN @ 2022-07-10 15:58:00`.
+Bildtexten visar kataloger på första raden och fotografnyckel samt EXIF-tid på egen rad, till exempel `CN21 @ 2022-07-10 15:58:00`.
 
 ## URL
 

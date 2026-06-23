@@ -262,6 +262,8 @@
       photos: [],
       visiblePhotos: [],
       renderedCount: 0,
+      thumbnailQueue: [],
+      thumbnailActive: 0,
       photographers: {},
       currentPath: [],
       viewer: {
@@ -292,6 +294,8 @@
     const viewerTitle = document.querySelector("#viewer-title");
     const viewerMeta = document.querySelector("#viewer-meta");
     const viewerClose = document.querySelector("#viewer-close");
+    const lazyImageObserver = createLazyImageObserver();
+    const thumbnailTimers = new WeakMap();
 
     init();
 
@@ -319,11 +323,13 @@
       viewerStage.addEventListener("pointerup", stopViewerDrag);
       viewerStage.addEventListener("pointercancel", stopViewerDrag);
       initInfiniteScroll();
+      window.addEventListener("scroll", handleScroll, { passive: true });
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && viewer.open) closeViewer();
       });
       window.addEventListener("resize", () => {
         if (viewer.open) resetViewerTransform();
+        handleScroll();
       });
       render();
     }
@@ -386,6 +392,8 @@
       const matches = rankMatches(photos, terms);
       state.visiblePhotos = matches;
       state.renderedCount = 0;
+      state.thumbnailQueue = [];
+      state.thumbnailActive = 0;
 
       replaceElementChildren(grid);
       try {
@@ -398,6 +406,7 @@
       count.textContent = query ? `${matches.length} av ${photos.length}` : `${matches.length} bilder`;
       renderNextPhotos();
       updateLoadMoreVisibility();
+      requestAnimationFrame(handleScroll);
     }
 
     function initInfiniteScroll() {
@@ -419,7 +428,7 @@
     }
 
     function renderNextPhotos() {
-      const batchSize = 40;
+      const batchSize = 20;
       const nextPhotos = state.visiblePhotos.slice(state.renderedCount, state.renderedCount + batchSize);
       if (nextPhotos.length === 0) {
         updateLoadMoreVisibility();
@@ -437,6 +446,7 @@
       grid.appendChild(fragment);
       state.renderedCount += nextPhotos.length;
       updateLoadMoreVisibility();
+      requestAnimationFrame(handleScroll);
     }
 
     function updateLoadMoreVisibility() {
@@ -517,9 +527,13 @@
       const name = document.createElement("div");
       const meta = document.createElement("div");
 
-      image.src = imageUrl(photo);
-      image.alt = photo.displayName;
+      image.dataset.thumbnailUrls = JSON.stringify(thumbnailUrls(photo));
+      image.dataset.thumbnailIndex = "0";
+      image.alt = "";
       image.loading = "lazy";
+      image.title = photo.displayName;
+      image.addEventListener("load", markThumbnailLoaded);
+      image.addEventListener("error", retryThumbnail);
 
       name.className = "name";
       name.textContent = photo.displayName;
@@ -537,7 +551,157 @@
       figure.appendChild(image);
       figure.appendChild(caption);
       figure.addEventListener("click", () => openPhoto(photo));
+      observeLazyImage(image);
       return figure;
+    }
+
+    function createLazyImageObserver() {
+      if (!("IntersectionObserver" in window)) return null;
+      return new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            loadLazyImage(entry.target);
+          }
+        }
+      }, { rootMargin: "1000px 0px" });
+    }
+
+    function observeLazyImage(image) {
+      if (lazyImageObserver) {
+        lazyImageObserver.observe(image);
+      } else {
+        loadLazyImage(image);
+      }
+    }
+
+    function loadLazyImage(image) {
+      if (
+        image.dataset.thumbnailQueued ||
+        image.dataset.thumbnailRequesting ||
+        image.dataset.thumbnailLoaded ||
+        image.dataset.thumbnailFailed
+      ) {
+        return;
+      }
+      image.dataset.thumbnailQueued = "1";
+      state.thumbnailQueue.push(image);
+      pumpThumbnailQueue();
+    }
+
+    function pumpThumbnailQueue() {
+      const maxActive = 8;
+      while (state.thumbnailActive < maxActive && state.thumbnailQueue.length > 0) {
+        const image = state.thumbnailQueue.shift();
+        delete image.dataset.thumbnailQueued;
+        if (!image.isConnected || image.dataset.thumbnailLoaded || image.dataset.thumbnailFailed) {
+          continue;
+        }
+        startThumbnailRequest(image);
+      }
+    }
+
+    function startThumbnailRequest(image) {
+      const url = currentThumbnailUrl(image);
+      if (!url) {
+        image.dataset.thumbnailFailed = "1";
+        return;
+      }
+      image.dataset.thumbnailRequesting = "1";
+      state.thumbnailActive += 1;
+      image.src = url;
+      thumbnailTimers.set(image, window.setTimeout(() => retryThumbnailRequest(image), 3000));
+      if (lazyImageObserver) {
+        lazyImageObserver.unobserve(image);
+      }
+    }
+
+    function markThumbnailLoaded(event) {
+      const image = event.currentTarget;
+      image.dataset.thumbnailLoaded = "1";
+      clearThumbnailTimer(image);
+      releaseThumbnailSlot(image);
+    }
+
+    function retryThumbnail(event) {
+      const image = event.currentTarget;
+      clearThumbnailTimer(image);
+      retryThumbnailRequest(image);
+    }
+
+    function retryThumbnailRequest(image) {
+      const urls = parseThumbnailUrls(image);
+      const nextIndex = (Number(image.dataset.thumbnailIndex) || 0) + 1;
+      const nextUrl = urls[nextIndex];
+      if (!nextUrl) {
+        thumbnailTimers.delete(image);
+        image.dataset.thumbnailFailed = "1";
+        releaseThumbnailSlot(image);
+        return;
+      }
+      image.dataset.thumbnailIndex = String(nextIndex);
+      image.src = nextUrl;
+      thumbnailTimers.set(image, window.setTimeout(() => retryThumbnailRequest(image), 3000));
+    }
+
+    function clearThumbnailTimer(image) {
+      const timer = thumbnailTimers.get(image);
+      if (timer) {
+        window.clearTimeout(timer);
+        thumbnailTimers.delete(image);
+      }
+    }
+
+    function releaseThumbnailSlot(image) {
+      if (!image.dataset.thumbnailRequesting) return;
+      delete image.dataset.thumbnailRequesting;
+      state.thumbnailActive = Math.max(0, state.thumbnailActive - 1);
+      pumpThumbnailQueue();
+    }
+
+    function loadVisibleLazyImages() {
+      const preloadMargin = 1000;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const selector = [
+        "img[data-thumbnail-urls]",
+        ":not([data-thumbnail-loaded])",
+        ":not([data-thumbnail-failed])",
+        ":not([data-thumbnail-queued])",
+        ":not([data-thumbnail-requesting])"
+      ].join("");
+      for (const image of grid.querySelectorAll(selector)) {
+        const bounds = image.getBoundingClientRect();
+        if (bounds.top <= viewportHeight + preloadMargin && bounds.bottom >= -preloadMargin) {
+          loadLazyImage(image);
+        }
+      }
+    }
+
+    function handleScroll() {
+      loadVisibleLazyImages();
+      renderMoreIfNeeded();
+    }
+
+    function renderMoreIfNeeded() {
+      if (loadMore.hidden) return;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const bounds = loadMore.getBoundingClientRect();
+      if (bounds.top <= viewportHeight + 900) {
+        renderNextPhotos();
+      }
+    }
+
+    function currentThumbnailUrl(image) {
+      const urls = parseThumbnailUrls(image);
+      const index = Number(image.dataset.thumbnailIndex) || 0;
+      return urls[index] || "";
+    }
+
+    function parseThumbnailUrls(image) {
+      try {
+        return JSON.parse(image.dataset.thumbnailUrls || "[]");
+      } catch (error) {
+        return [];
+      }
     }
 
     function replaceElementChildren(element, children = []) {
@@ -944,6 +1108,23 @@
         return `https://drive.google.com/thumbnail?id=${encodeURIComponent(photo.key)}&sz=w${size}`;
       }
       return encodeURI(photo.key);
+    }
+
+    function googleUserContentUrl(photo, size = 640) {
+      if (/^[A-Za-z0-9_-]{10,}$/.test(photo.key)) {
+        return `https://lh3.googleusercontent.com/d/${encodeURIComponent(photo.key)}=w${size}`;
+      }
+      return "";
+    }
+
+    function thumbnailUrls(photo) {
+      return [
+        googleUserContentUrl(photo, 320),
+        imageUrl(photo, 320),
+        googleUserContentUrl(photo, 480),
+        imageUrl(photo, 480),
+        imageUrl(photo, 160)
+      ].filter(Boolean);
     }
 
     function driveViewerUrl(photo) {
