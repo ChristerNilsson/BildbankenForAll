@@ -51,17 +51,22 @@
       padding: 11px 12px;
     }
 
-    .count {
-      color: #536160;
-      font-size: 0.95rem;
-      white-space: nowrap;
-    }
-
     .current-catalog {
+      align-items: baseline;
       color: #536160;
+      display: flex;
       font-size: 1rem;
       font-weight: 700;
+      gap: 8px;
+      justify-content: flex-start;
       margin: 0 0 12px;
+      max-width: 860px;
+    }
+
+    .current-catalog-count {
+      font-size: 0.95rem;
+      font-weight: 400;
+      white-space: nowrap;
     }
 
     .catalogs {
@@ -70,7 +75,20 @@
       flex-wrap: wrap;
       gap: 8px;
       margin-top: 14px;
-      max-width: 1100px;
+      width: 100%;
+    }
+
+    .catalog-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .catalog-links a {
+      color: #1e2528;
+      font-size: 0.95rem;
     }
 
     .catalog-button {
@@ -100,7 +118,7 @@
     .grid {
       display: grid;
       gap: 18px;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
     }
 
     figure {
@@ -231,12 +249,15 @@
 <body>
   <header>
     <h1>Bildbanken</h1>
-    <p class="current-catalog" id="current-catalog">Home</p>
+    <div class="current-catalog">
+      <span id="current-catalog">Home</span>
+      <span class="current-catalog-count" id="current-catalog-count"></span>
+    </div>
     <div class="tools">
       <input id="search" type="search" placeholder="Sök på katalog eller filnamn" autocomplete="off">
-      <span class="count" id="count"></span>
     </div>
     <div class="catalogs" id="catalogs"></div>
+    <div class="catalog-links" id="catalog-links"></div>
   </header>
   <main>
     <div class="grid" id="grid"></div>
@@ -284,9 +305,10 @@
     const grid = document.querySelector("#grid");
     const loadMore = document.querySelector("#load-more");
     const catalogs = document.querySelector("#catalogs");
+    const catalogLinks = document.querySelector("#catalog-links");
     const currentCatalog = document.querySelector("#current-catalog");
+    const currentCatalogCount = document.querySelector("#current-catalog-count");
     const search = document.querySelector("#search");
-    const count = document.querySelector("#count");
     const empty = document.querySelector("#empty");
     const viewer = document.querySelector("#viewer");
     const viewerStage = document.querySelector("#viewer-stage");
@@ -401,9 +423,10 @@
       } catch (error) {
         console.warn("Kunde inte rendera katalogknappar", error);
       }
+      renderCatalogLinks();
       currentCatalog.textContent = currentCatalogName();
+      currentCatalogCount.textContent = `(${photos.length})`;
       empty.hidden = matches.length > 0;
-      count.textContent = query ? `${matches.length} av ${photos.length}` : `${matches.length} bilder`;
       renderNextPhotos();
       updateLoadMoreVisibility();
       requestAnimationFrame(handleScroll);
@@ -466,7 +489,7 @@
         const childPath = [...state.currentPath, name];
         const photoCount = photoCountInCatalog(childPath);
         if (photoCount === 0) continue;
-        buttons.push(catalogButton(`${displayName(name)} (${photoCount})`, () => {
+        buttons.push(catalogButton(`${displayCatalogButtonName(name)} (${photoCount})`, () => {
           state.currentPath = [...state.currentPath, name];
           render();
         }));
@@ -475,9 +498,22 @@
       replaceElementChildren(catalogs, buttons);
     }
 
+    function renderCatalogLinks() {
+      const links = tournamentCodes(state.currentPath[state.currentPath.length - 1] || "").map((code) => codeLink(code));
+      replaceElementChildren(catalogLinks, links);
+    }
+
     function currentCatalogName() {
       if (state.currentPath.length === 0) return "Home";
       return displayName(state.currentPath[state.currentPath.length - 1]);
+    }
+
+    function displayCatalogButtonName(value) {
+      return displayName(value)
+        .replace(/,/g, "")
+        .replace(/\b[ITFR]\d{5}\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
     }
 
     function catalogButton(label, onClick, className = "") {
@@ -1062,31 +1098,30 @@
     }
 
     function appendTextWithTournamentLinks(container, text, source) {
-      const tournamentPattern = /T(\d{5})/g;
-      let start = 0;
-      let match = tournamentPattern.exec(source);
-      while (match) {
-        const code = match[0];
-        const id = match[1];
-        const displayIndex = text.indexOf(code, start);
-        if (displayIndex !== -1) {
-          if (displayIndex > start) {
-            container.appendChild(document.createTextNode(text.slice(start, displayIndex)));
-          }
-          const link = document.createElement("a");
-          link.href = `https://member.schack.se/ShowTournamentServlet?id=${encodeURIComponent(id)}&listingtype=2`;
-          link.target = "_blank";
-          link.rel = "noopener";
-          link.textContent = "Resultat";
-          link.addEventListener("click", (event) => event.stopPropagation());
-          container.appendChild(link);
-          start = displayIndex + code.length;
-        }
-        match = tournamentPattern.exec(source);
-      }
-      if (start < text.length) {
-        container.appendChild(document.createTextNode(text.slice(start)));
-      }
+      container.appendChild(document.createTextNode(text));
+    }
+
+    function codeLink(code) {
+      const link = document.createElement("a");
+      const type = code[0];
+      const id = code.slice(1);
+      link.href = codeUrl(type, id);
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = codeLabel(type);
+      return link;
+    }
+
+    function codeUrl(type, id) {
+      return `https://member.schack.se/ShowTournamentServlet?id=${encodeURIComponent(id)}&listingtype=2`;
+    }
+
+    function codeLabel(type) {
+      return type === "T" ? "Turnering" : "Länk";
+    }
+
+    function tournamentCodes(value) {
+      return Array.from(String(value).matchAll(/\bT\d{5}\b/g), (match) => match[0]);
     }
 
     function displayName(value) {
@@ -1098,6 +1133,7 @@
         .replace(/60plus/gi, "60+")
         .replace(/\s+16x9\s+/gi, " ")
         .replace(/\.jpg$/i, "")
+        .replace(/\b[ITFR]\d{5}\b/g, "")
         .replace(/\s+/g, " ")
         .trim();
     }

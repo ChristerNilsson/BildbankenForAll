@@ -21,9 +21,11 @@ Bilder läses in efter hand när du scrollar.
 
 Katalogknapparna visar katalogerna på aktuell nivå. Siffran inom parentes visar hur många bilder som finns i katalogen. Klicka på en katalog för att gå ner i den. Använd `Upp` för att gå tillbaka till föräldrakatalogen.
 
+Aktuell katalog visas ovanför sökfältet, med antal bilder direkt till höger om katalognamnet, till exempel `(123)`.
+
 Sökning och bildlistan gäller inom den aktuella katalogen.
 
-Turneringskoder i katalognamn visas som länken `Resultat`, till exempel för `T18469`.
+Koder som `T18469` visas inte i katalog- eller bildtext. När aktuell katalog innehåller en sådan kod visas länken `Turnering` på egen rad under katalogknapparna. Koder som börjar med `I`, `F` eller `R` visas inte ännu.
 Bildtexten visar kataloger på första raden och fotografnyckel samt EXIF-tid på egen rad, till exempel `CN21 @ 2022-07-10 15:58:00`.
 
 ## URL

@@ -81,16 +81,25 @@ Starta inte någon web server, jag använder Go Live!
 
 ## Visning
 
+Öka minimum-bredden till 270px.
+
 Problemet jag trodde fanns i index.html, beror troligen på att Google Drive inte levererade bilder.
 
-Visa namnet på aktuell katalog eller Home.  
+Visa namnet på aktuell katalog eller Home. Direkt till höger om denna ska antalet bilder visas som (123)
+Antalet bilder till höger om sökrutan ska bort.
 Visa inte katalogknappar med (0) bilder.  
 Om det finns underkataloger till en turnering ska dessa räknas rekursivt.  
 
 Bara de bilder som syns i fönstret ska hämtas. När man scrollar ska fler bilder hämtas.
 
 Håll reda på aktuell katalog. Från start visas alla kataloger, i fallande ordning.
-Initialt visas alla kataloger på aktuell nivå som knappar.
+Alla kataloger på aktuell nivå som visas som knappar.
+Visa så många knappar som möjligt i bredd. Just nu verkar bara 60% av bredden utnyttjas.
+Kommatecken i knapptext ska undertryckas.
+
+* länkar av typ Iddddd, Tddddd, Fddddd eller Rddddd
+	* Ska aldrig förekomma i läsbar text, enbart som länkar på en egen rad under knapparna.
+
 När man klickar på en katalog blir den katalogen aktuell katalog.
 Man ska kunna gå upp till föräldrakatalogen med knappen `Upp`.
 
@@ -112,9 +121,10 @@ I katalognamn och filnamn ska följande tecken bytas ut (enbart vid visning):
 
 Avgränsarna / samt | ska ersättas med •
 
-Om strängen `T18469` finns i katalognamnet ska den bytas mot en länk:
+Om strängen `T18469` finns i aktuellt katalognamn ska den visas som en länk på en egen rad:
 `https://member.schack.se/ShowTournamentServlet?id=18469&listingtype=2`
-Det gäller strängen T följd av fem siffror. Texten ska vara `Resultat`
+Det gäller strängen T följd av fem siffror. Texten ska vara `Turnering`
+Strängar av typen Iddddd, Fddddd eller Rddddd ska inte visas ännu.
 
 Bildtexten ska även visa EXIF-timestamp på formatet YYYY-MM-DD HH:MM:SS
 
