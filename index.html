@@ -386,7 +386,7 @@
               timestamp,
               haystack: [...folders, name, ...displayFolders, displayPhotoName].join(" ").toLowerCase()
             });
-          } else {
+          } else if (value && typeof value === "object") {
             walk(value, [...path, name]);
           }
         }
@@ -496,7 +496,10 @@
     }
 
     function renderCatalogLinks() {
-      const links = tournamentCodes(state.currentPath[state.currentPath.length - 1] || "").map((code) => codeLink(code));
+      const links = [
+        ...tournamentCodes(state.currentPath[state.currentPath.length - 1] || "").map((code) => codeLink(code)),
+        ...pdfLinks(currentCatalogNode())
+      ];
       replaceElementChildren(catalogLinks, links);
     }
 
@@ -1149,6 +1152,25 @@
       return link;
     }
 
+    function pdfLinks(node) {
+      return Object.entries(node || {})
+        .filter(([, value]) => typeof value === "string")
+        .map(([name, fileId]) => pdfLink(name, fileId));
+    }
+
+    function pdfLink(name, fileId) {
+      const link = document.createElement("a");
+      link.href = driveFileUrl(fileId);
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.textContent = displayPdfName(name);
+      return link;
+    }
+
+    function displayPdfName(name) {
+      return displayName(name).replace(/\.pdf$/i, "").trim();
+    }
+
     function codeUrl(type, id) {
       if (type === "C") {
         return `https://chess-results.com/tnr${encodeURIComponent(id)}.aspx?lan=1&art=4`;
@@ -1161,7 +1183,10 @@
     }
 
     function tournamentCodes(value) {
-      return Array.from(String(value).matchAll(/\b(?:T\d{5}|C\d{7})\b/g), (match) => match[0]);
+      return Array.from(
+        String(value).matchAll(/(?:^|[^A-Za-z0-9])((?:T\d{5}|C\d{7}))(?=$|[^A-Za-z0-9])/g),
+        (match) => match[1]
+      );
     }
 
     function displayName(value) {
@@ -1187,6 +1212,10 @@
       return encodeURI(photo.key);
     }
 
+    function driveFileUrl(fileId) {
+      return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view?usp=drive_link`;
+    }
+
     function googleUserContentUrl(photo, size = 640) {
       if (/^[A-Za-z0-9_-]{10,}$/.test(photo.key)) {
         return `https://lh3.googleusercontent.com/d/${encodeURIComponent(photo.key)}=w${size}`;
@@ -1206,7 +1235,7 @@
 
     function driveViewerUrl(photo) {
       if (/^[A-Za-z0-9_-]{10,}$/.test(photo.key)) {
-        return `https://drive.google.com/file/d/${encodeURIComponent(photo.key)}/view?usp=drive_link`;
+        return driveFileUrl(photo.key);
       }
       return "";
     }

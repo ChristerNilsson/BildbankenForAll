@@ -12,6 +12,11 @@ Inga manifest.json ska skapas.
 
 Pythonprogrammet ska hämta tillkomna/ändrade katalognamn och filnamn i fotografernas kataloger.
 
+Dessutom ska pythonprogrammet ta med pdf-filer i den resulterande json-filen
+        "inbjudan.pdf": "1PDqhYAQJhzBgbhCZ8fEfiKaPTA_g_IRq"
+
+Dessa filer ska visas som länkar när katalogen pdf:en ligger i är aktuell katalog. Länktexten i ovanstående fall blir "inbjudan"
+
 Fotografernas kataloger ligger på olika Google Drives.
 
 photos.json ska innehålla ett katalogträd där löven utgörs av länkar till bilder.

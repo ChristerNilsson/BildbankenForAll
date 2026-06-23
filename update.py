@@ -31,6 +31,7 @@ OAUTH_CREDENTIALS_FILE = ROOT / "credentials.json"
 OAUTH_TOKEN_FILE = ROOT / "token.json"
 OAUTH_SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"]
 IMAGE_MIME_PREFIX = "image/"
+PDF_MIME_TYPE = "application/pdf"
 GOOGLE_DRIVE_FOLDER = "application/vnd.google-apps.folder"
 USER_AGENT = "Mozilla/5.0 BildbankenForAll/1.0"
 GOOGLE_DRIVE_API_KEY = os.environ.get("GOOGLE_DRIVE_API_KEY", "")
@@ -52,6 +53,10 @@ class DriveItem:
     @property
     def is_image(self) -> bool:
         return self.mime_type.startswith(IMAGE_MIME_PREFIX)
+
+    @property
+    def is_pdf(self) -> bool:
+        return self.mime_type == PDF_MIME_TYPE
 
 
 def main() -> None:
@@ -102,7 +107,7 @@ def main() -> None:
         add_drive_folder(photographer_photos, photographer_key, folder_id, [], drive_entries)
         count = count_photos(photographer_photos)
 
-        if count == 0 and old_photographer_photos:
+        if count_entries(photographer_photos) == 0 and old_photographer_photos:
             log_detail(f"Inga Drive-poster hittades för {photographer_key}. Återanvänder {photographer_file.name}.")
             photographer_photos = old_photographer_photos
             count = count_photos(photographer_photos)
@@ -310,7 +315,10 @@ def add_drive_folder(
         if item.is_folder:
             changed += add_drive_folder(photos, photographer_key, item.id, [*path, item.name], drive_entries, visited)
         elif item.is_image:
-            insert_photo(photos, path, item.name, [item.id, photographer_key, item.taken_time])
+            insert_file(photos, path, item.name, [item.id, photographer_key, item.taken_time])
+            changed += 1
+        elif item.is_pdf:
+            insert_file(photos, path, item.name, item.id)
             changed += 1
     return changed
 
@@ -435,18 +443,23 @@ def parse_embedded_folder_view(text: str, items: dict[str, DriveItem]) -> None:
         item_id = drive_id_from_url(href)
         if not item_id or not name:
             continue
-        mime_type = GOOGLE_DRIVE_FOLDER if "/folders/" in href else "image/jpeg"
+        if "/folders/" in href:
+            mime_type = GOOGLE_DRIVE_FOLDER
+        elif name.lower().endswith(".pdf"):
+            mime_type = PDF_MIME_TYPE
+        else:
+            mime_type = "image/jpeg"
         items[item_id] = DriveItem(item_id, name, mime_type)
 
 
 def parse_rendered_drive_list(text: str, items: dict[str, DriveItem]) -> None:
     id_then_label = re.compile(
         r'data-id="(?P<id>[A-Za-z0-9_-]{10,})"(?:(?!data-id=).){0,2500}?'
-        r'aria-label="(?P<label>[^"]+) (?P<kind>Image|Folder) Shared"',
+        r'aria-label="(?P<label>[^"]+) (?P<kind>Image|Folder|PDF) Shared"',
         re.DOTALL,
     )
     label_then_id = re.compile(
-        r'aria-label="(?P<label>[^"]+) (?P<kind>Image|Folder) Shared"(?:(?!aria-label=).){0,2500}?'
+        r'aria-label="(?P<label>[^"]+) (?P<kind>Image|Folder|PDF) Shared"(?:(?!aria-label=).){0,2500}?'
         r'data-id="(?P<id>[A-Za-z0-9_-]{10,})"',
         re.DOTALL,
     )
@@ -454,7 +467,12 @@ def parse_rendered_drive_list(text: str, items: dict[str, DriveItem]) -> None:
         for match in pattern.finditer(text):
             item_id = match.group("id")
             name = repair_text(html.unescape(match.group("label")).strip())
-            mime_type = GOOGLE_DRIVE_FOLDER if match.group("kind") == "Folder" else "image/jpeg"
+            if match.group("kind") == "Folder":
+                mime_type = GOOGLE_DRIVE_FOLDER
+            elif match.group("kind") == "PDF":
+                mime_type = PDF_MIME_TYPE
+            else:
+                mime_type = "image/jpeg"
             if name:
                 items[item_id] = DriveItem(item_id, name, mime_type)
 
@@ -470,7 +488,7 @@ def parse_drive_bootstrap_data(text: str, items: dict[str, DriveItem]) -> None:
         add_bootstrap_item(match, items)
 
     alternate_pattern = re.compile(
-        r'\["(?P<id>[A-Za-z0-9_-]{10,})"[^\[]+?"(?P<name>(?:[^"\\]|\\.)+)"[^\[]+?"(?P<mime>image/[^"]+|application/vnd\.google-apps\.folder)"',
+        r'\["(?P<id>[A-Za-z0-9_-]{10,})"[^\[]+?"(?P<name>(?:[^"\\]|\\.)+)"[^\[]+?"(?P<mime>image/[^"]+|application/pdf|application/vnd\.google-apps\.folder)"',
         re.DOTALL,
     )
     for match in alternate_pattern.finditer(text):
@@ -481,7 +499,7 @@ def add_bootstrap_item(match: re.Match[str], items: dict[str, DriveItem]) -> Non
     item_id = match.group("id")
     name = repair_text(decode_js_string(match.group("name")))
     mime_type = decode_js_string(match.group("mime"))
-    if name and (mime_type.startswith(IMAGE_MIME_PREFIX) or mime_type == GOOGLE_DRIVE_FOLDER):
+    if name and (mime_type.startswith(IMAGE_MIME_PREFIX) or mime_type in (PDF_MIME_TYPE, GOOGLE_DRIVE_FOLDER)):
         items[item_id] = DriveItem(item_id, name, mime_type)
 
 
@@ -531,7 +549,7 @@ def timestamp_seconds_since_1900(value: str) -> int:
     return round((parsed.astimezone(timezone.utc) - epoch).total_seconds())
 
 
-def insert_photo(photos: dict[str, Any], path: list[str], filename: str, value: list[Any]) -> None:
+def insert_file(photos: dict[str, Any], path: list[str], filename: str, value: Any) -> None:
     year, parts = tree_parts([*path, filename])
     node = photos.setdefault(year, {})
     for part in parts[:-1]:
@@ -563,6 +581,14 @@ def count_photos(node: Any) -> int:
         return 1
     if isinstance(node, dict):
         return sum(count_photos(child) for child in node.values())
+    return 0
+
+
+def count_entries(node: Any) -> int:
+    if isinstance(node, (list, str)):
+        return 1
+    if isinstance(node, dict):
+        return sum(count_entries(child) for child in node.values())
     return 0
 
 

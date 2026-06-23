@@ -18,6 +18,9 @@ Exempel på kataloglänk:
 https://drive.google.com/drive/folders/1jAaO5eTMgH7jYr1O7stv1dlxO4ylbICX?usp=sharing
 ```
 
+pdf-filer kan läggas in turneringskataloger. De kommer att visas som länkar när katalogen är aktuell.
+
+
 ## Kataloger
 
 Använd gärna år som första nivå:

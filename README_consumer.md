@@ -26,6 +26,7 @@ Sökfältet visas högst upp. Aktuell katalog visas under sökfältet, med antal
 Sökning och bildlistan gäller inom den aktuella katalogen.
 
 Koder som `T18469` eller `C1209676` visas inte i katalog- eller bildtext. När aktuell katalog innehåller en sådan kod visas länken `Turnering` på egen rad under katalogknapparna. Koder som börjar med `I`, `F` eller `R` visas inte ännu.
+PDF-filer i aktuell katalog visas också som länkar under katalogknapparna, med filnamnet utan `.pdf` som länktext.
 Bildtexten visar kataloger på första raden och fotografnyckel samt EXIF-tid på egen rad, till exempel `CN21 @ 2022-07-10 15:58:00`.
 
 ## URL
