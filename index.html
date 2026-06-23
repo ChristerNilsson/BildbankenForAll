@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bildbanken</title>
+  <title>Bildportalen</title>
   <style>
     :root {
       color-scheme: light;
@@ -247,7 +247,7 @@
       <input id="search" type="search" placeholder="Sök på katalog eller filnamn" autocomplete="off">
     </div>
     <div class="current-catalog">
-      <span id="current-catalog">Bildbanken</span>
+      <span id="current-catalog">Bildportalen</span>
       <span class="current-catalog-count" id="current-catalog-count"></span>
     </div>
     <div class="catalogs" id="catalogs"></div>
@@ -504,7 +504,7 @@
     }
 
     function currentCatalogName() {
-      if (state.currentPath.length === 0) return "Bildbanken";
+      if (state.currentPath.length === 0) return "Bildportalen";
       return displayName(state.currentPath[state.currentPath.length - 1]);
     }
 

@@ -75,6 +75,8 @@ Förklaring:
 
 # index.html
 
+Fliknamnet ska vara Bildportalen.
+
 Lägg in en `Try it!` länk i readme.md
 
 Starta inte någon web server, jag använder Go Live!
@@ -86,13 +88,13 @@ Starta inte någon web server, jag använder Go Live!
 
 ## Visning
 
-Tag bort rubriken Bildbanken högst upp. Istället för Home ska Bildbanken visas.
+Då man står på toppnivån ska Bildportalen visas
 
 Sökrutan ska stå högst upp på sidan.
 
 Öka minimum-bredden till 270px.
 
-Visa namnet på aktuell katalog eller Bildbanken. Direkt till höger om denna ska antalet bilder visas som (123).
+Visa namnet på aktuell katalog eller Bildportalen. Direkt till höger om denna ska antalet bilder visas som (123).
 Detta antal ska räknas om med varje tangenttryckning i sökrutan
 Antalet bilder till höger om sökrutan ska bort.
 Visa inte katalogknappar med (0) bilder.  

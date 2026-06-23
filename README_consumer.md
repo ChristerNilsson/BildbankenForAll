@@ -21,7 +21,7 @@ Bilder läses in efter hand när du scrollar.
 
 Katalogknapparna visar katalogerna på aktuell nivå. Siffran inom parentes visar hur många bilder som finns i katalogen. Klicka på en katalog för att gå ner i den. Använd `Upp` för att gå tillbaka till föräldrakatalogen.
 
-Sökfältet visas högst upp. Aktuell katalog visas under sökfältet, med antal matchande bilder direkt till höger om katalognamnet, till exempel `Bildbanken (123)`. Antalet räknas om när du skriver i sökfältet.
+Sökfältet visas högst upp. Aktuell katalog visas under sökfältet, med antal matchande bilder direkt till höger om katalognamnet, till exempel `Bildportalen (123)`. Antalet räknas om när du skriver i sökfältet.
 
 Sökning och bildlistan gäller inom den aktuella katalogen.
 
