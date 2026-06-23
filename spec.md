@@ -127,6 +127,11 @@ Avgränsarna / samt | ska ersättas med •
 Om strängen `T18469` finns i aktuellt katalognamn ska den visas som en länk på en egen rad:
 `https://member.schack.se/ShowTournamentServlet?id=18469&listingtype=2`
 Det gäller strängen T följd av fem siffror. Texten ska vara `Turnering`
+
+Om strängen `C1209676` finns i aktuellt katalognamn ska den visas som en länk på en egen rad:
+`https://chess-results.com/tnr1209676.aspx?lan=1&art=4`
+Det gäller strängen C följd av sju siffror. Texten ska vara `Turnering`
+
 Strängar av typen Iddddd, Fddddd eller Rddddd ska inte visas ännu.
 
 Bildtexten ska även visa EXIF-timestamp på formatet YYYY-MM-DD HH:MM:SS

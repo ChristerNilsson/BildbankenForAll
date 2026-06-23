@@ -508,7 +508,7 @@
     function displayCatalogButtonName(value) {
       return displayName(value)
         .replace(/,/g, "")
-        .replace(/\b[ITFR]\d{5}\b/g, "")
+        .replace(/\b(?:[ITFR]\d{5}|C\d{7})\b/g, "")
         .replace(/\s+/g, " ")
         .trim();
     }
@@ -1150,15 +1150,18 @@
     }
 
     function codeUrl(type, id) {
+      if (type === "C") {
+        return `https://chess-results.com/tnr${encodeURIComponent(id)}.aspx?lan=1&art=4`;
+      }
       return `https://member.schack.se/ShowTournamentServlet?id=${encodeURIComponent(id)}&listingtype=2`;
     }
 
     function codeLabel(type) {
-      return type === "T" ? "Turnering" : "Länk";
+      return type === "T" || type === "C" ? "Turnering" : "Länk";
     }
 
     function tournamentCodes(value) {
-      return Array.from(String(value).matchAll(/\bT\d{5}\b/g), (match) => match[0]);
+      return Array.from(String(value).matchAll(/\b(?:T\d{5}|C\d{7})\b/g), (match) => match[0]);
     }
 
     function displayName(value) {
@@ -1171,6 +1174,7 @@
         .replace(/\s+16x9\s+/gi, " ")
         .replace(/\.jpg$/i, "")
         .replace(/\b[ITFR]\d{5}\b/g, "")
+        .replace(/\bC\d{7}\b/g, "")
         .replace(/\s+/g, " ")
         .trim();
     }
