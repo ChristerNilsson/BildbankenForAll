@@ -65,3 +65,9 @@ Om två fotografer har samma sökväg kan den senare skriva över den tidigare i
 ## Viktigt
 
 Google Drive-filens id är det stabila. Fotografen kan byta katalognamn och filnamn utan att bilden slutar fungera, så länge filen inte raderas och laddas upp igen.
+
+## Länkar
+
+* T: member.schack.se
+* C: chess-results
+* pdf-filer: Lägges i lämplig turneringskatalog
