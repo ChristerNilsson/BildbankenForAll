@@ -97,6 +97,8 @@ Starta inte någon web server, jag använder Go Live!
 
 ## Visning
 
+Länkarna ska ligga ovanför knapparna.
+
 Wrappa .txt och .pdf med `https://drive.google.com/file/d/DRIVELINK/preview`.
 Ungefär som .jpg wrappas.
 

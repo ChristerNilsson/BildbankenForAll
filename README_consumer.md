@@ -26,8 +26,8 @@ Sökfältet visas högst upp. Aktuell sökväg visas under sökfältet, med anta
 
 Sökning och bildlistan gäller inom den aktuella katalogen.
 
-Koder som `T18469` eller `C1209676` visas inte i katalog- eller bildtext. När aktuell katalog innehåller en sådan kod visas länken `Turnering` på egen rad under katalogknapparna. Koder som börjar med `I`, `F` eller `R` visas inte ännu.
-PDF-, URL- och TXT-filer i aktuell katalog visas också som länkar under katalogknapparna, med filnamnet utan filändelse som länktext. PDF- och TXT-filer öppnas via Google Drives `/preview`-adress. Webbadressen i URL-filens andra rad läses av uppdateringsprogrammet och används direkt som länk. Länkar öppnas i samma flik.
+Koder som `T18469` eller `C1209676` visas inte i katalog- eller bildtext. När aktuell katalog innehåller en sådan kod visas länken `Turnering` på egen rad ovanför katalogknapparna. Koder som börjar med `I`, `F` eller `R` visas inte ännu.
+PDF-, URL- och TXT-filer i aktuell katalog visas också som länkar ovanför katalogknapparna, med filnamnet utan filändelse som länktext. PDF- och TXT-filer öppnas via Google Drives `/preview`-adress. Webbadressen i URL-filens andra rad läses av uppdateringsprogrammet och används direkt som länk. Länkar öppnas i samma flik.
 Bildtexten visar kataloger på första raden och fotografnyckel samt EXIF-tid på egen rad, till exempel `CN @ 2022-07-10 15:58:00`.
 
 ## URL
