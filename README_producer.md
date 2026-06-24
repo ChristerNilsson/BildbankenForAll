@@ -18,7 +18,7 @@ Exempel på kataloglänk:
 https://drive.google.com/drive/folders/1jAaO5eTMgH7jYr1O7stv1dlxO4ylbICX?usp=sharing
 ```
 
-.pdf, .txt och .url kan läggas in turneringskataloger. De kommer att visas som länkar när katalogen är aktuell.
+.pdf, .txt och .url kan läggas i turneringskataloger eller direkt i rotkatalogen. De kommer att visas som länkar när katalogen är aktuell.
 
 Turneringsresultat kan även visas med T12345 eller C1234567.
 * T : member.schack.se

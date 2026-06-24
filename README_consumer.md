@@ -9,13 +9,14 @@ Skriv i sökfältet för att söka på katalognamn och bildfilnamn.
 Du kan söka på flera ord:
 
 ```text
-wasa klass
+anna cramling
 ```
 
-Träffar som innehåller båda orden visas först. Därefter visas träffar på första ordet och sedan träffar på andra ordet.
+Träffar som innehåller alla orden visas först. Därefter visas träffar på första ordet och så vidare.
 
-Om sökfältet är tomt visas alla bilder i den aktuella katalogen.
-Bilder läses in efter hand när du scrollar.
+Om sökfältet är tomt visas alla bilder i den aktuella katalogen.  
+Du kan binda ihop t ex förnamn och efternamn. anna_cramling  
+Bilder läses in efter hand när du scrollar.  
 
 ## Kataloger
 
@@ -27,7 +28,7 @@ Sökning och bildlistan gäller inom den aktuella katalogen.
 
 Koder som `T18469` eller `C1209676` visas inte i katalog- eller bildtext. När aktuell katalog innehåller en sådan kod visas länken `Turnering` på egen rad under katalogknapparna. Koder som börjar med `I`, `F` eller `R` visas inte ännu.
 PDF-, URL- och TXT-filer i aktuell katalog visas också som länkar under katalogknapparna, med filnamnet utan filändelse som länktext. PDF- och TXT-filer öppnas via Google Drives `/preview`-adress. Webbadressen i URL-filens andra rad läses av uppdateringsprogrammet och används direkt som länk. Länkar öppnas i samma flik.
-Bildtexten visar kataloger på första raden och fotografnyckel samt EXIF-tid på egen rad, till exempel `CN21 @ 2022-07-10 15:58:00`.
+Bildtexten visar kataloger på första raden och fotografnyckel samt EXIF-tid på egen rad, till exempel `CN @ 2022-07-10 15:58:00`.
 
 ## URL
 
@@ -36,7 +37,7 @@ Sökningen och aktuell katalog sparas i URL:en. Det betyder att du kan kopiera l
 Exempel:
 
 ```text
-http://127.0.0.1:5500/index.html?q=wasa%20klass&folder=2026/2026-05-20%20Stockholmsm%C3%A4sterskap%2060plus%20snabb
+https://christernilsson.github.io/BildbankenForAll?q=anna cramling&folder=2026/2026-05-20 Stockholmsmästerskap 60plus snabb
 ```
 
 ## Öppna bild

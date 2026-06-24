@@ -8,6 +8,9 @@ Detta projekt består av:
 
 # update.py
 
+Filer på toppnivån ska hanteras så här i photos.json:
+```"Help.pdf": "1-MZngZMde5PSEWFVY147ZBytqze9iGkd"```
+
 Inga manifest.json ska skapas.
 
 Pythonprogrammet ska hämta tillkomna/ändrade katalognamn och filnamn i fotografernas kataloger.

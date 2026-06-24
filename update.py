@@ -339,10 +339,10 @@ def add_drive_folder(
                 log_detail(f"Hoppar över {item.name}: {error}")
                 continue
             link_name = re.sub(r"\.url$", "", item.name, flags=re.IGNORECASE)
-            insert_file(photos, path, link_name, target_url)
+            insert_file(photos, path, link_name, target_url, preserve_top_level=True)
             changed += 1
         elif item.is_link_file:
-            insert_file(photos, path, item.name, item.id)
+            insert_file(photos, path, item.name, item.id, preserve_top_level=True)
             changed += 1
     return changed
 
@@ -630,7 +630,17 @@ def timestamp_seconds_since_1900(value: str) -> int:
     return round((parsed.astimezone(timezone.utc) - epoch).total_seconds())
 
 
-def insert_file(photos: dict[str, Any], path: list[str], filename: str, value: Any) -> None:
+def insert_file(
+    photos: dict[str, Any],
+    path: list[str],
+    filename: str,
+    value: Any,
+    preserve_top_level: bool = False,
+) -> None:
+    if preserve_top_level and not path:
+        photos[filename] = value
+        return
+
     year, parts = tree_parts([*path, filename])
     node = photos.setdefault(year, {})
     for part in parts[:-1]:
