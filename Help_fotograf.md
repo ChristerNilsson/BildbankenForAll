@@ -1,10 +1,10 @@
-# Bildbanken - fotograf
+# Bildportalen - fotograf
 
-Den här filen är för dig som bidrar med bilder till Bildbanken.
+Den här filen är för dig som bidrar med bilder till Bildportalen
 
 ## Google Drive
 
-Lägg bilderna i en Google Drive-katalog som du delar med administratören. Administratören behöver länken till din rotkatalog.
+Lägg bilderna i en Google Drive-katalog som du delar med alla (enbart läsning). Administratören behöver länken till din bildkatalog.
 
 Skicka detta till administratören:
 
@@ -28,10 +28,24 @@ Exempel: `2022-04-12_Tyresö SK 50år, Jubileumsturnering 2022_C1209676`
 
 ## Kataloger
 
-Använd gärna år som första nivå:
+Följande katalognamn används på de högsta nivåerna:
 
 ```text
-2026/
+2026
+2025
+osv
+0000 Klubbar
+	Seniorschack Stockholm
+	Farsta SK
+	osv
+0000 Evenemang
+	2026
+	2025
+	osv
+0000 Diverse
+	2026
+	2025
+	osv
 ```
 
 Under året, skapa en katalog per turnering eller händelse. Ta med datum och tydligt namn:
@@ -90,9 +104,9 @@ En bra tumregel:
 
 ## Byta namn
 
-Du kan byta namn på kataloger och bildfiler i Google Drive. Bildbanken använder Google Drive-filens id för att öppna bilden.
+Du kan byta namn på kataloger och bildfiler i Google Drive. Bildportalen använder Google Drive-filens id för att öppna bilden.
 
-Undvik däremot att radera en bild och ladda upp den igen om den redan finns i Bildbanken. Då får den ett nytt id.
+Undvik däremot att radera en bild och ladda upp den igen om den redan finns i Bildportalen. Då får den ett nytt id.
 
 ## Delning
 

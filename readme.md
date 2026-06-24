@@ -1,25 +1,13 @@
 # TODO
 
-[Try it!](https://christernilsson.github.io/BildbankenForAll/)
+[Try it!](https://christernilsson.github.io/Bildportalen/)
 
 ## HIGH 
-
-### GUI Katalogknappar
-
-* Typ 2026, turneringskataloger samt grupper.
-* Visa antalet träffar i katalogerna med ().
-* `Upp` för att komma tillbaka.
 
 ### PYTHON Automatisk exekvering av update.py
 
 * Github secrets
 * schedule cron
-
-### Krockar mellan fotografer
-
-* De ska hålla sig till exakt samma namn för turneringskatalogen
-* De ska ha olika bildfilnamn annars tappar man en bild
-* Då blir merge korrekt och båda bilderna kommer med i samma katalog
 
 ## LOW ###################
 
@@ -29,15 +17,27 @@
 
 * [ ] update.py kan fråga efter flera fotografer samtidigt.
 
+
+## DONE 
+
 ### Chess-Results
 
 * [ ] C1209676 => "https://chess-results.com/tnr1209676.aspx?lan=1&art=4"
 
-## DONE 
+### GUI Katalogknappar
 
-### Inbjudan, Fakta, Resultat
+* Typ 2026, turneringskataloger samt grupper.
+* Visa antalet träffar i katalogerna med ().
+* `Upp` för att komma tillbaka.
 
-Dessa hanteras tillsvidare genom att ta bilder.
+### PYTHON och GUI Länk till Inbjudan och Fakta
+* I12345 och F12345 tas bort 
+* Ersätts med följande alternativ
+	* inbjudan.pdf
+	* fakta.txt
+	* övrigt.url
+		* Kan peka på godtycklig webbsida
+* T12345 och C1234567 fungerar som tidigare. Dvs läggs i slutet på katalognamnet
 
 ### GUI Knappar
 * [x] Share kan skippas. Urlen ska vara up to date. Dvs vald katalog och söksträng
@@ -55,10 +55,13 @@ Dessa hanteras tillsvidare genom att ta bilder.
 ### GUI Turneringslänk
 * [x] T12345 är löst. Medlemssystemet enbart.
 
+
+
 ## SKA EJ GÖRAS
 
-### PYTHON och GUI Länk till Inbjudan och Facts
-* I12345 och F12345. Det behövs en fil file_index.txt som mappar mot en url
-* Varje fotograf har en egen nummer serie
-* Filnamnet sparas i JSON-filen
+### Krockar mellan fotografer
+
+* De ska hålla sig till exakt samma namn för turneringskatalogen
+* De ska ha olika bildfilnamn annars tappar man en bild
+* Då blir merge korrekt och båda bilderna kommer med i samma katalog
 

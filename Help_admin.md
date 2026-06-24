@@ -1,4 +1,4 @@
-# Bildbanken - admin
+# Bildportalen - admin
 
 Den här filen är för den som administrerar Bildbanken och lägger till producenter, dvs fotografer.
 

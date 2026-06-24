@@ -32,7 +32,7 @@ photos.json ska innehålla ett katalogträd där löven utgörs av länkar till 
 
 photographers.json innehåller registrerade fotografer samt url till deras bilder.
 
-För att få bättre prestanda, ska varje fotograf ska sparas i en egen json-fil. T ex CN21.json.
+För att få bättre prestanda, ska varje fotograf ska sparas i en egen json-fil. T ex CN.json.
 
 Denna json-fil ska sparas i katalogen photographers
 
@@ -46,7 +46,7 @@ Vill se lite indenteringar i logfilen:
 2026-06-20T18:06:00 Startar uppdatering.
 2026-06-20T18:06:00  OAuth används för Drive API och ändringskontroll.
 2026-06-20T18:06:00  Hämtar CN21.
-2026-06-20T18:06:00   Inga Drive-ändringar för CN21. CN21.json lämnas oförändrad.
+2026-06-20T18:06:00   Inga Drive-ändringar för CN. CN.json lämnas oförändrad.
 2026-06-20T18:06:00  Hämtar LOAH.
 2026-06-20T18:06:01   Inga Drive-ändringar för LOAH. LOAH.json lämnas oförändrad.
 2026-06-20T18:06:01  Skapade photos.json med 2311 bilder.
