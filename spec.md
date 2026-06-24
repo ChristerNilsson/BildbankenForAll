@@ -94,9 +94,8 @@ Starta inte någon web server, jag använder Go Live!
 
 ## Visning
 
-Filer av typen .txt ska visas i webläsaren.  
-
-Filer av typen .pdf ska visas i webläsaren.  
+Wrappa .txt och .pdf med `https://drive.google.com/file/d/DRIVELINK/preview`.
+Ungefär som .jpg wrappas.
 
 Filer av typen .url ska visas i webläsaren.  
 

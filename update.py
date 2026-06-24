@@ -13,10 +13,12 @@ from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 try:
+    from google.auth.exceptions import RefreshError
     from google.auth.transport.requests import Request as GoogleAuthRequest
     from google.oauth2.credentials import Credentials
     from google_auth_oauthlib.flow import InstalledAppFlow
 except ImportError:
+    RefreshError = Exception
     GoogleAuthRequest = None
     Credentials = None
     InstalledAppFlow = None
@@ -191,17 +193,21 @@ def load_oauth_token() -> str:
 
     creds = None
     if OAUTH_TOKEN_FILE.exists():
-        creds = Credentials.from_authorized_user_file(str(OAUTH_TOKEN_FILE), OAUTH_SCOPES)
+        creds = Credentials.from_authorized_user_file(str(OAUTH_TOKEN_FILE))
 
     has_required_scopes = bool(creds and creds.has_scopes(OAUTH_SCOPES))
-    if not creds or not creds.valid or not has_required_scopes:
-        if creds and creds.expired and creds.refresh_token and has_required_scopes:
+    if creds and creds.expired and creds.refresh_token and has_required_scopes:
+        try:
             creds.refresh(GoogleAuthRequest())
-        else:
-            if creds and not has_required_scopes:
-                log("OAuth-token saknar läsbehörighet för filinnehåll. Begär nytt godkännande.")
-            flow = InstalledAppFlow.from_client_secrets_file(str(OAUTH_CREDENTIALS_FILE), OAUTH_SCOPES)
-            creds = flow.run_local_server(port=0)
+        except RefreshError as error:
+            log(f"OAuth-token kunde inte förnyas: {error}. Begär nytt godkännande.")
+            creds = None
+
+    if not creds or not creds.valid or not has_required_scopes:
+        if creds and not has_required_scopes:
+            log("OAuth-token saknar läsbehörighet för filinnehåll. Begär nytt godkännande.")
+        flow = InstalledAppFlow.from_client_secrets_file(str(OAUTH_CREDENTIALS_FILE), OAUTH_SCOPES)
+        creds = flow.run_local_server(port=0)
         OAUTH_TOKEN_FILE.write_text(creds.to_json(), encoding="utf-8")
         log(f"Skapade {OAUTH_TOKEN_FILE.name}.")
 

@@ -625,3 +625,33 @@
 2026-06-24T07:39:40   Inga Drive-ändringar för LOAH. LOAH.json lämnas oförändrad.
 2026-06-24T07:39:40  Skapade photos.json med 3046 bilder.
 2026-06-24T07:39:40 Uppdatering klar.
+
+2026-06-24T07:54:10 Startar uppdatering.
+2026-06-24T07:54:10  OAuth används för Drive API och ändringskontroll.
+2026-06-24T07:54:10  Hämtar CN.
+2026-06-24T07:54:43   Skapade CN.json med 2270 bilder.
+2026-06-24T07:54:43  Hämtar LOAH.
+2026-06-24T07:54:44   Inga Drive-ändringar för LOAH. LOAH.json lämnas oförändrad.
+2026-06-24T07:54:44  Skapade photos.json med 3046 bilder.
+2026-06-24T07:54:44 Uppdatering klar.
+
+2026-06-24T10:47:29 Startar uppdatering.
+
+2026-06-24T10:48:39 Startar uppdatering.
+
+2026-06-24T10:49:09 Startar uppdatering.
+
+2026-06-24T10:51:11 Startar uppdatering.
+2026-06-24T10:51:11 OAuth-token saknar läsbehörighet för filinnehåll. Begär nytt godkännande.
+2026-06-24T10:53:25 Skapade token.json.
+2026-06-24T10:53:25  OAuth används för Drive API och ändringskontroll.
+2026-06-24T10:53:25  Hämtar CN.
+
+2026-06-24T10:53:36 Startar uppdatering.
+2026-06-24T10:53:36  OAuth används för Drive API och ändringskontroll.
+2026-06-24T10:53:36  Hämtar CN.
+2026-06-24T10:54:08   Skapade CN.json med 2270 bilder.
+2026-06-24T10:54:08  Hämtar LOAH.
+2026-06-24T10:54:09   Inga Drive-ändringar för LOAH. LOAH.json lämnas oförändrad.
+2026-06-24T10:54:09  Skapade photos.json med 3046 bilder.
+2026-06-24T10:54:09 Uppdatering klar.
