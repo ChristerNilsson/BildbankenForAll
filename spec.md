@@ -105,7 +105,7 @@ Sökrutan ska stå högst upp på sidan.
 
 Öka minimum-bredden till 270px.
 
-Visa namnet på aktuell katalog eller Bildportalen. Direkt till höger om denna ska antalet bilder visas som (123).
+Visa namnet på aktuell path eller Bildportalen. Direkt till höger om denna ska antalet bilder visas som (123).
 Detta antal ska räknas om med varje tangenttryckning i sökrutan
 Antalet bilder till höger om sökrutan ska bort.
 Visa inte katalogknappar med (0) bilder.  

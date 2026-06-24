@@ -505,7 +505,7 @@
 
     function currentCatalogName() {
       if (state.currentPath.length === 0) return "Bildportalen";
-      return displayName(state.currentPath[state.currentPath.length - 1]);
+      return state.currentPath.map(displayName).join(" • ");
     }
 
     function displayCatalogButtonName(value) {
