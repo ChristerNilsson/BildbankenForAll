@@ -29,9 +29,11 @@ LOG_FILE = ROOT / "update.log"
 PHOTOGRAPHER_DATA_DIR = ROOT / "photographers"
 OAUTH_CREDENTIALS_FILE = ROOT / "credentials.json"
 OAUTH_TOKEN_FILE = ROOT / "token.json"
-OAUTH_SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"]
+OAUTH_SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 IMAGE_MIME_PREFIX = "image/"
 PDF_MIME_TYPE = "application/pdf"
+LINK_FILE_EXTENSIONS = (".pdf", ".txt")
+SUPPORTED_FILE_EXTENSIONS = (*LINK_FILE_EXTENSIONS, ".url")
 GOOGLE_DRIVE_FOLDER = "application/vnd.google-apps.folder"
 USER_AGENT = "Mozilla/5.0 BildbankenForAll/1.0"
 GOOGLE_DRIVE_API_KEY = os.environ.get("GOOGLE_DRIVE_API_KEY", "")
@@ -55,8 +57,12 @@ class DriveItem:
         return self.mime_type.startswith(IMAGE_MIME_PREFIX)
 
     @property
-    def is_pdf(self) -> bool:
-        return self.mime_type == PDF_MIME_TYPE
+    def is_link_file(self) -> bool:
+        return self.name.lower().endswith(LINK_FILE_EXTENSIONS)
+
+    @property
+    def is_url_file(self) -> bool:
+        return self.name.lower().endswith(".url")
 
 
 def main() -> None:
@@ -187,10 +193,13 @@ def load_oauth_token() -> str:
     if OAUTH_TOKEN_FILE.exists():
         creds = Credentials.from_authorized_user_file(str(OAUTH_TOKEN_FILE), OAUTH_SCOPES)
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
+    has_required_scopes = bool(creds and creds.has_scopes(OAUTH_SCOPES))
+    if not creds or not creds.valid or not has_required_scopes:
+        if creds and creds.expired and creds.refresh_token and has_required_scopes:
             creds.refresh(GoogleAuthRequest())
         else:
+            if creds and not has_required_scopes:
+                log("OAuth-token saknar läsbehörighet för filinnehåll. Begär nytt godkännande.")
             flow = InstalledAppFlow.from_client_secrets_file(str(OAUTH_CREDENTIALS_FILE), OAUTH_SCOPES)
             creds = flow.run_local_server(port=0)
         OAUTH_TOKEN_FILE.write_text(creds.to_json(), encoding="utf-8")
@@ -317,7 +326,16 @@ def add_drive_folder(
         elif item.is_image:
             insert_file(photos, path, item.name, [item.id, photographer_key, item.taken_time])
             changed += 1
-        elif item.is_pdf:
+        elif item.is_url_file:
+            try:
+                target_url = read_url_file(item.id)
+            except RuntimeError as error:
+                log_detail(f"Hoppar över {item.name}: {error}")
+                continue
+            link_name = re.sub(r"\.url$", "", item.name, flags=re.IGNORECASE)
+            insert_file(photos, path, link_name, target_url)
+            changed += 1
+        elif item.is_link_file:
             insert_file(photos, path, item.name, item.id)
             changed += 1
     return changed
@@ -409,6 +427,57 @@ def fetch_drive_json(url: str) -> dict[str, Any]:
         raise RuntimeError(str(error)) from error
 
 
+def fetch_drive_text(url: str) -> str:
+    try:
+        headers = {"User-Agent": USER_AGENT}
+        if OAUTH_TOKEN:
+            headers["Authorization"] = f"Bearer {OAUTH_TOKEN}"
+        with urlopen(Request(url, headers=headers), timeout=30) as response:
+            return response.read().decode("utf-8-sig", errors="replace")
+    except HTTPError as error:
+        try:
+            detail = error.read().decode("utf-8", errors="replace")
+        except OSError:
+            detail = str(error)
+        raise RuntimeError(detail) from error
+    except (URLError, TimeoutError) as error:
+        raise RuntimeError(str(error)) from error
+
+
+def read_url_file(file_id: str) -> str:
+    if OAUTH_TOKEN or GOOGLE_DRIVE_API_KEY:
+        query = {"alt": "media"}
+        if not OAUTH_TOKEN:
+            query["key"] = GOOGLE_DRIVE_API_KEY
+        try:
+            content = fetch_drive_text(
+                f"https://www.googleapis.com/drive/v3/files/{file_id}?" + urlencode(query)
+            )
+        except RuntimeError as api_error:
+            try:
+                content = fetch_public_drive_file(file_id)
+            except RuntimeError:
+                raise api_error
+    else:
+        content = fetch_public_drive_file(file_id)
+
+    lines = content.splitlines()
+    if len(lines) < 2:
+        raise RuntimeError("url-filen saknar en andra rad.")
+
+    target = re.sub(r"^\s*URL\s*=\s*", "", lines[1], flags=re.IGNORECASE).strip()
+    parsed = urlparse(target)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise RuntimeError("url-filens andra rad innehåller ingen giltig http- eller https-länk.")
+    return target
+
+
+def fetch_public_drive_file(file_id: str) -> str:
+    return fetch_text(
+        "https://drive.google.com/uc?" + urlencode({"export": "download", "id": file_id})
+    )
+
+
 def fetch_text(url: str) -> str:
     try:
         with urlopen(request(url), timeout=30) as response:
@@ -445,7 +514,7 @@ def parse_embedded_folder_view(text: str, items: dict[str, DriveItem]) -> None:
             continue
         if "/folders/" in href:
             mime_type = GOOGLE_DRIVE_FOLDER
-        elif name.lower().endswith(".pdf"):
+        elif name.lower().endswith(SUPPORTED_FILE_EXTENSIONS):
             mime_type = PDF_MIME_TYPE
         else:
             mime_type = "image/jpeg"
@@ -455,11 +524,11 @@ def parse_embedded_folder_view(text: str, items: dict[str, DriveItem]) -> None:
 def parse_rendered_drive_list(text: str, items: dict[str, DriveItem]) -> None:
     id_then_label = re.compile(
         r'data-id="(?P<id>[A-Za-z0-9_-]{10,})"(?:(?!data-id=).){0,2500}?'
-        r'aria-label="(?P<label>[^"]+) (?P<kind>Image|Folder|PDF) Shared"',
+        r'aria-label="(?P<label>[^"]+) (?P<kind>Image|Folder|PDF|Text|File|Unknown) Shared"',
         re.DOTALL,
     )
     label_then_id = re.compile(
-        r'aria-label="(?P<label>[^"]+) (?P<kind>Image|Folder|PDF) Shared"(?:(?!aria-label=).){0,2500}?'
+        r'aria-label="(?P<label>[^"]+) (?P<kind>Image|Folder|PDF|Text|File|Unknown) Shared"(?:(?!aria-label=).){0,2500}?'
         r'data-id="(?P<id>[A-Za-z0-9_-]{10,})"',
         re.DOTALL,
     )
@@ -471,6 +540,8 @@ def parse_rendered_drive_list(text: str, items: dict[str, DriveItem]) -> None:
                 mime_type = GOOGLE_DRIVE_FOLDER
             elif match.group("kind") == "PDF":
                 mime_type = PDF_MIME_TYPE
+            elif name.lower().endswith((".url", ".txt")):
+                mime_type = "application/octet-stream"
             else:
                 mime_type = "image/jpeg"
             if name:
@@ -488,7 +559,7 @@ def parse_drive_bootstrap_data(text: str, items: dict[str, DriveItem]) -> None:
         add_bootstrap_item(match, items)
 
     alternate_pattern = re.compile(
-        r'\["(?P<id>[A-Za-z0-9_-]{10,})"[^\[]+?"(?P<name>(?:[^"\\]|\\.)+)"[^\[]+?"(?P<mime>image/[^"]+|application/pdf|application/vnd\.google-apps\.folder)"',
+        r'\["(?P<id>[A-Za-z0-9_-]{10,})"[^\[]+?"(?P<name>(?:[^"\\]|\\.)+)"[^\[]+?"(?P<mime>image/[^"]+|application/pdf|text/plain|application/octet-stream|application/vnd\.google-apps\.folder)"',
         re.DOTALL,
     )
     for match in alternate_pattern.finditer(text):
@@ -499,7 +570,11 @@ def add_bootstrap_item(match: re.Match[str], items: dict[str, DriveItem]) -> Non
     item_id = match.group("id")
     name = repair_text(decode_js_string(match.group("name")))
     mime_type = decode_js_string(match.group("mime"))
-    if name and (mime_type.startswith(IMAGE_MIME_PREFIX) or mime_type in (PDF_MIME_TYPE, GOOGLE_DRIVE_FOLDER)):
+    if name and (
+        mime_type.startswith(IMAGE_MIME_PREFIX)
+        or mime_type in (PDF_MIME_TYPE, GOOGLE_DRIVE_FOLDER)
+        or name.lower().endswith(SUPPORTED_FILE_EXTENSIONS)
+    ):
         items[item_id] = DriveItem(item_id, name, mime_type)
 
 

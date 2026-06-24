@@ -498,7 +498,7 @@
     function renderCatalogLinks() {
       const links = [
         ...tournamentCodes(state.currentPath[state.currentPath.length - 1] || "").map((code) => codeLink(code)),
-        ...pdfLinks(currentCatalogNode())
+        ...fileLinks(currentCatalogNode())
       ];
       replaceElementChildren(catalogLinks, links);
     }
@@ -1150,21 +1150,31 @@
       return link;
     }
 
-    function pdfLinks(node) {
+    function fileLinks(node) {
       return Object.entries(node || {})
         .filter(([, value]) => typeof value === "string")
-        .map(([name, fileId]) => pdfLink(name, fileId));
+        .map(([name, target]) => fileLink(name, target));
     }
 
-    function pdfLink(name, fileId) {
+    function fileLink(name, target) {
       const link = document.createElement("a");
-      link.href = driveFileUrl(fileId);
-      link.textContent = displayPdfName(name);
+      link.href = fileUrl(name, target);
+      link.textContent = displayFileName(name);
       return link;
     }
 
-    function displayPdfName(name) {
-      return displayName(name).replace(/\.pdf$/i, "").trim();
+    function fileUrl(name, target) {
+      if (/^https?:\/\//i.test(target)) {
+        return target;
+      }
+      if (/\.(?:pdf|txt)$/i.test(name)) {
+        return driveFilePreviewUrl(target);
+      }
+      return driveFileUrl(target);
+    }
+
+    function displayFileName(name) {
+      return displayName(name).replace(/\.(?:pdf|url|txt)$/i, "").trim();
     }
 
     function codeUrl(type, id) {
@@ -1210,6 +1220,10 @@
 
     function driveFileUrl(fileId) {
       return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view?usp=drive_link`;
+    }
+
+    function driveFilePreviewUrl(fileId) {
+      return `https://drive.google.com/file/d/${encodeURIComponent(fileId)}/preview`;
     }
 
     function googleUserContentUrl(photo, size = 640) {

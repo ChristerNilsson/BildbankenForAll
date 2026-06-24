@@ -36,7 +36,7 @@ Programmet läser `photographers.json`, hämtar katalogträden från Google Driv
 - `photographers/<KEY>.changes.json`
 - `update.log`
 
-`credentials.json` och `token.json` används lokalt för Google OAuth och ska inte committas.
+`credentials.json` och `token.json` används lokalt för Google OAuth och ska inte committas. OAuth behöver skrivskyddad Drive-behörighet för att kunna läsa innehållet i `.url`-filer. Om en äldre token bara har metadata-behörighet begär `update.py` ett nytt godkännande och ersätter `token.json`.
 
 ## GitHub
 

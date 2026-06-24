@@ -12,10 +12,15 @@ Inga manifest.json ska skapas.
 
 Pythonprogrammet ska hämta tillkomna/ändrade katalognamn och filnamn i fotografernas kataloger.
 
-Dessutom ska pythonprogrammet ta med pdf-filer i den resulterande json-filen
+Dessutom ska pythonprogrammet ta med .pdf och .txt i den resulterande json-filen
         "inbjudan.pdf": "1PDqhYAQJhzBgbhCZ8fEfiKaPTA_g_IRq"
+        "fakta.txt": "1PDqhYAQJhzBgbhCZ8fEfiKaPTA_g_IRq"
 
-Dessa filer ska visas som länkar när katalogen pdf:en ligger i är aktuell katalog. Länktexten i ovanstående fall blir "inbjudan".  
+.url-filer hanteras så här:
+	1. Läs in url-filens andra rad (länken)
+	2. "resultat": "https://..."
+
+Dessa filer ska visas som länkar när katalogen dessa ligger i är aktuell katalog. Länktexten i ovanstående fall blir "inbjudan".  
 Alla länkar ska skapas i samma flik som aktuell nuvarande.
 
 Fotografernas kataloger ligger på olika Google Drives.
@@ -88,6 +93,12 @@ Starta inte någon web server, jag använder Go Live!
 * photos.json
 
 ## Visning
+
+Filer av typen .txt ska visas i webläsaren.  
+
+Filer av typen .pdf ska visas i webläsaren.  
+
+Filer av typen .url ska visas i webläsaren.  
 
 Då man står på toppnivån ska Bildportalen visas
 
