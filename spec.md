@@ -8,6 +8,8 @@ Detta projekt består av:
 
 # update.py
 
+På toppnivån förekommer katalogerna .. 2025, 2026, ... samt `0000 Klubbar`, `0000 Evenemang` och `0000 Diverse`
+
 Filer på toppnivån ska hanteras så här i photos.json:
 ```"Help.pdf": "1-MZngZMde5PSEWFVY147ZBytqze9iGkd"```
 
@@ -57,7 +59,7 @@ Vill se lite indenteringar i logfilen:
 Denna fil uppdateras manuellt.
 
 {
-	"CN21": ["Christer Nilsson", "https://drive.google.com/drive/folders/1IQSQUGml83eFJQAxqi_ymg1UXhtqSv4K?usp=sharing"]
+	"CN": ["Christer Nilsson", "https://drive.google.com/drive/folders/1IQSQUGml83eFJQAxqi_ymg1UXhtqSv4K?usp=sharing"]
 }
 
 https://drive.google.com/drive/folders/1IQSQUGml83eFJQAxqi_ymg1UXhtqSv4K?usp=sharing pekar på denna dators drive-katalog där bilderna ligger.

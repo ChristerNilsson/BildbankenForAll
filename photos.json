@@ -1,4 +1,44 @@
 {
+  "0000 Evenemang": {
+    "2023": {
+      "Vy-NMF_01.Krum_och_Aryan_Nolvo_Finance_2023-11-14-X.jpg": [
+        "1fT7FA98FG5pkBRgDB9BuI3paik0U_TOh",
+        "CN",
+        3908974805
+      ],
+      "Vy-NMF_02.Håkan_och_Cristina_SEB_I_2023-11-14-X.jpg": [
+        "1Bs69301aVmu6LdlhVwo39bj2cEjM-mmX",
+        "CN",
+        3908974737
+      ]
+    }
+  },
+  "0000 Klubbar": {
+    "Farsta SK": {
+      "Elina_Boukhdhir_2020-02-12-X.jpg": [
+        "1_0dZdOqLwXEUFXDrQlFCrUKgEmhVM_sr",
+        "CN",
+        3790512519
+      ],
+      "Elissa_Boukhdhir_2020-02-12-X.jpg": [
+        "1nYWaj8zyioHlymF0ncVj8EFawa4EKFaW",
+        "CN",
+        3790512499
+      ]
+    },
+    "Seniorschack Stockholm": {
+      "Vy-Seniorschack-Stockholm_prisutdelning_Seniorserien_VT-26_Klass3_Mikael_Lundberg_och_Anders_Nystrand_2026-05-06.jpg": [
+        "1tI4I3vk37_H-s9zmjUu6h8HcYJiVfoH3",
+        "CN",
+        3987063093
+      ],
+      "Vy-Seniorschack-Stockholm_Vårfesten_VT-26_2026-05-06-2.jpg": [
+        "1h_hGFmIK52P8X7ifZjojn3tteyzkULFq",
+        "CN",
+        3987063690
+      ]
+    }
+  },
   "2022": {
     "2022-04-12_Tyresö SK 50år, Jubileumsturnering 2022_C1209676": {
       "Fakta.txt": "1D9KIykFKEzitTDEqXpNEixI4_-da8_Ll",
@@ -11546,5 +11586,7 @@
       }
     }
   },
-  "Help.pdf": "1-MZngZMde5PSEWFVY147ZBytqze9iGkd"
+  "Hjälp-admin.pdf": "1iE2MKQFHfB9wsaDZVtka9vNeYdgxXhAI",
+  "Hjälp-fotograf.pdf": "1Oa-0O1MLAgBucnbiToTeZywc43UVBlmI",
+  "Hjälp.pdf": "1Oqux7pDykMc4N59yjxP9oiWIDI_PpOQx"
 }

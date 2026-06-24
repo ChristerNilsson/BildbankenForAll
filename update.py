@@ -36,6 +36,7 @@ IMAGE_MIME_PREFIX = "image/"
 PDF_MIME_TYPE = "application/pdf"
 LINK_FILE_EXTENSIONS = (".pdf", ".txt")
 SUPPORTED_FILE_EXTENSIONS = (*LINK_FILE_EXTENSIONS, ".url")
+TOP_LEVEL_CATALOGS = {"0000 Klubbar", "0000 Evenemang", "0000 Diverse"}
 GOOGLE_DRIVE_FOLDER = "application/vnd.google-apps.folder"
 USER_AGENT = "Mozilla/5.0 BildbankenForAll/1.0"
 GOOGLE_DRIVE_API_KEY = os.environ.get("GOOGLE_DRIVE_API_KEY", "")
@@ -658,6 +659,9 @@ def merge_tree(target: dict[str, Any], source: dict[str, Any]) -> None:
 
 
 def tree_parts(parts: list[str]) -> tuple[str, list[str]]:
+    if parts and parts[0] in TOP_LEVEL_CATALOGS:
+        return parts[0], parts[1:]
+
     year = next((part for part in parts if re.fullmatch(r"\d{4}", part)), None)
     if year is None:
         dated = next((part[:4] for part in parts if re.match(r"\d{4}-\d{2}-\d{2}", part)), None)

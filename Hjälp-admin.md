@@ -6,7 +6,7 @@ Den här filen är för den som administrerar Bildbanken och lägger till produc
 
 Fotografer registreras manuellt i `photographers.json`.
 
-Formatet är:
+Formatet är: 
 
 ```json
 {

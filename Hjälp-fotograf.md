@@ -2,7 +2,7 @@
 
 Den här filen är för dig som bidrar med bilder till Bildportalen
 
-## Google Drive
+## Google Drive 
 
 Lägg bilderna i en Google Drive-katalog som du delar med alla (enbart läsning). Administratören behöver länken till din bildkatalog.
 

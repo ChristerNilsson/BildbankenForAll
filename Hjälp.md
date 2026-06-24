@@ -6,11 +6,9 @@ En söksida för bilder tagna av olika fotografer.
 
 Skriv i sökfältet för att söka på katalognamn och bildfilnamn.
 
-Du kan söka på ett eller flera ord:
+Du kan söka på ett eller flera ord: 
 
-```text
-anna cramling
-```
+```anna cramling```
 
 Träffar som innehåller alla orden visas först. Därefter visas träffar på första ordet och så vidare.
 
@@ -32,18 +30,12 @@ Bildtexten visar katalognamn, fotograf och knäpptidpunkt, till exempel `LOAH @ 
 
 ## URL
 
-Sökningen och aktuell katalog sparas i URL:en. Det betyder att du kan kopiera länken och skicka samma vy till någon annan.
+Sökning och aktuell katalog sparas i URL:en. Det betyder att du kan kopiera länken och skicka samma vy till någon annan.
 
 Exempel:
 
-```text
-https://christernilsson.github.io/Bildportalen?q=anna cramling&folder=2026/2026-05-20 Stockholmsmästerskap 60plus snabb
-```
+```https://christernilsson.github.io/Bildportalen?q=anna cramling&folder=2026/2026-05-20 Stockholmsmästerskap 60plus snabb```
 
-## Öppna bild
+## Visa stor bild
 
-Klicka på en bild för att öppna den direkt i Googles visningsprogram. Där kan du zooma, panorera, hämta och använda Drive-menyn.
-
-## Ladda ner
-
-När bilden är öppnad i Google Drive kan du normalt ladda ner den via Drive-menyn.
+Klicka på en bild för att visa den i Googles visningsprogram. Där kan du zooma, panorera, hämta och använda Drive-menyn.
